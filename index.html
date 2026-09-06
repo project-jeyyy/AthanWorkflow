@@ -2846,6 +2846,10 @@ function renderDailyReport() {
 
   const shift = _getTodayShift();
   const ownedClients = MASTER_CLIENTS.filter(c => c.owned).map(c => c.name);
+  const otherClients = MASTER_CLIENTS.filter(c => !c.owned).map(c => c.name);
+  const allClientOpts = (sel) => '<option value="">Select client...</option>' +
+    (ownedClients.length ? '<optgroup label="Athan\'s Accounts">' + ownedClients.map(cn=>'<option value="'+esc(cn)+'"'+(cn===sel?' selected':'')+'>'+esc(cn)+'</option>').join('') + '</optgroup>' : '') +
+    '<optgroup label="All Clients">' + otherClients.map(cn=>'<option value="'+esc(cn)+'"'+(cn===sel?' selected':'')+'>'+esc(cn)+'</option>').join('') + '</optgroup>';
 
   let shiftHtml;
   if (shift) {
@@ -2859,7 +2863,7 @@ function renderDailyReport() {
     clientBlocks = '<div id="dr-clients" style="display:flex;flex-direction:column;gap:0.5rem">' +
       ownedClients.slice(0, 3).map((c, i) =>
         '<div class="dr-client-block" style="padding:0.6rem 0.85rem;background:var(--surface);border-radius:var(--radius-sm);display:flex;flex-direction:column;gap:0.35rem">' +
-          '<div style="display:flex;align-items:center;gap:0.5rem"><label style="margin:0;flex:0 0 auto">Client</label><select class="dr-client-name" style="flex:1;font-size:0.82rem;padding:0.35rem 0.6rem"><option value="">Select client...</option>'+ownedClients.map(cn=>'<option value="'+esc(cn)+'"'+(cn===c?' selected':'')+'>'+esc(cn)+'</option>').join('')+'</select></div>' +
+          '<div style="display:flex;align-items:center;gap:0.5rem"><label style="margin:0;flex:0 0 auto">Client</label><select class="dr-client-name" style="flex:1;font-size:0.82rem;padding:0.35rem 0.6rem">'+allClientOpts(c)+'</select></div>' +
           '<textarea class="dr-client-tasks" rows="2" placeholder="Tasks completed for this client..." style="font-size:0.82rem;resize:none"></textarea>' +
         '</div>'
       ).join('') +
@@ -2884,15 +2888,15 @@ function renderDailyReport() {
 function _addClientBlock() {
   const container = document.getElementById('dr-clients');
   if (!container) return;
-  const ownedClients = MASTER_CLIENTS.filter(c => c.owned).map(c => c.name);
+  const owned = MASTER_CLIENTS.filter(c => c.owned).map(c => c.name);
+  const others = MASTER_CLIENTS.filter(c => !c.owned).map(c => c.name);
+  const opts = '<option value="">Select client...</option>' +
+    (owned.length ? '<optgroup label="Athan\'s Accounts">' + owned.map(cn=>'<option value="'+esc(cn)+'">'+esc(cn)+'</option>').join('') + '</optgroup>' : '') +
+    '<optgroup label="All Clients">' + others.map(cn=>'<option value="'+esc(cn)+'">'+esc(cn)+'</option>').join('') + '</optgroup>';
   const block = document.createElement('div');
   block.className = 'dr-client-block';
   block.style.cssText = 'padding:0.6rem 0.85rem;background:var(--surface);border-radius:var(--radius-sm);display:flex;flex-direction:column;gap:0.35rem';
-  if (ownedClients.length > 0) {
-    block.innerHTML = '<div style="display:flex;align-items:center;gap:0.5rem"><label style="margin:0;flex:0 0 auto">Client</label><select class="dr-client-name" style="flex:1;font-size:0.82rem;padding:0.35rem 0.6rem"><option value="">Select client...</option>'+ownedClients.map(cn=>'<option value="'+esc(cn)+'">'+esc(cn)+'</option>').join('')+'</select><button onclick="this.closest(\'.dr-client-block\').remove()" style="background:none;border:none;color:var(--danger);font-size:0.9rem;cursor:pointer;padding:0 0.3rem">&times;</button></div><textarea class="dr-client-tasks" rows="2" placeholder="Tasks completed for this client..." style="font-size:0.82rem;resize:none"></textarea>';
-  } else {
-    block.innerHTML = '<div style="display:flex;align-items:center;gap:0.5rem"><input class="dr-client-name" type="text" placeholder="Client name" style="font-size:0.82rem;flex:1"><button onclick="this.closest(\'.dr-client-block\').remove()" style="background:none;border:none;color:var(--danger);font-size:0.9rem;cursor:pointer;padding:0 0.3rem">&times;</button></div><textarea class="dr-client-tasks" rows="2" placeholder="Tasks completed..." style="font-size:0.82rem;resize:none"></textarea>';
-  }
+  block.innerHTML = '<div style="display:flex;align-items:center;gap:0.5rem"><label style="margin:0;flex:0 0 auto">Client</label><select class="dr-client-name" style="flex:1;font-size:0.82rem;padding:0.35rem 0.6rem">'+opts+'</select><button onclick="this.closest(\'.dr-client-block\').remove()" style="background:none;border:none;color:var(--danger);font-size:0.9rem;cursor:pointer;padding:0 0.3rem">&times;</button></div><textarea class="dr-client-tasks" rows="2" placeholder="Tasks completed for this client..." style="font-size:0.82rem;resize:none"></textarea>';
   container.appendChild(block);
 }
 
