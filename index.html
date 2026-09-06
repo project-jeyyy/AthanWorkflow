@@ -2389,11 +2389,20 @@ function calcOverall(cd) { return progressPct(cd.overallStatus || 'Not Yet Start
 
 function renderAccounts() {
   const search = (document.getElementById('account-search').value||'').toLowerCase().trim();
-  const filterProg = document.getElementById('filter-progress').value;
+  const filterSel = document.getElementById('filter-progress');
+  const filterProg = filterSel.value;
   const list = document.getElementById('accounts-list');
   const clientUser = currentUser === BOSS_USERNAME ? 'athanviloria' : currentUser;
-  let clients = MASTER_CLIENTS;
-  if (accountTab==='mine') clients = clients.filter(c=>c.owned);
+  const baseClients = accountTab==='mine' ? MASTER_CLIENTS.filter(c=>c.owned) : MASTER_CLIENTS;
+  const counts = { 'Not Yet Started':0, 'In Process':0, 'Completed':0, 'Closed':0 };
+  const ownedCount = baseClients.filter(c=>c.owned).length;
+  baseClients.forEach(c => { const s = getClientData(clientUser, c.name).overallStatus || 'Not Yet Started'; if (counts[s] !== undefined) counts[s]++; else counts[s] = 1; });
+  const total = baseClients.length;
+  const opts = '<option value="">All Status ('+total+')</option>' +
+    OVERALL_STATUS_OPTS.map(o => '<option value="'+o+'"'+(filterProg===o?' selected':'')+'>'+o+' ('+( counts[o]||0)+')</option>').join('') +
+    '<option value="__owned__"'+(filterProg==='__owned__'?' selected':'')+'>Athan\'s Accounts ('+ ownedCount+')</option>';
+  if (filterSel.innerHTML !== opts) filterSel.innerHTML = opts;
+  let clients = baseClients;
   if (search) clients = clients.filter(c=>c.name.toLowerCase().includes(search));
   if (filterProg === '__owned__') clients = clients.filter(c=>c.owned);
   else if (filterProg) clients = clients.filter(c=>{ const cd=getClientData(clientUser,c.name); return (cd.overallStatus||'Not Yet Started')===filterProg; });
