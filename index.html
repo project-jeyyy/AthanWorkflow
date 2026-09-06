@@ -1214,7 +1214,11 @@ function getUpdates() {
   return [..._updatesCache, ...SEED_UPDATES.filter(u=>!storedIds.has(u.id))];
 }
 function setUpdates(list) {
-  _updatesCache = list.filter(x=>!SEED_UPDATES.find(s=>s.id===x.id));
+  _updatesCache = list.filter(x => {
+    const seed = SEED_UPDATES.find(s => s.id === x.id);
+    if (!seed) return true;
+    return x.closed || x.ack || x.ackNote;
+  });
   db.collection('app').doc('updates').set({ list: _updatesCache }).catch(()=>{});
 }
 
@@ -2288,7 +2292,7 @@ function postUpdate() {
   if (!msg) { toast('Message cannot be empty.'); return; }
   const now = new Date();
   const date = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  const updates = getUpdates();
   updates.unshift({ id: 'upd-'+Date.now(), date, type, priority, msg, notified: true });
   setUpdates(updates);
   document.getElementById('update-msg').value = '';
@@ -2302,7 +2306,7 @@ function notifyUpdate(id) {
   const idx = all.findIndex(u => u.id === id);
   if (idx === -1) return;
   all[idx] = { ...all[idx], notified: true };
-  setUpdates(all.filter(u => !SEED_UPDATES.find(s => s.id === u.id)));
+  setUpdates(all);
   renderUpdates();
   toast('Athan has been notified.');
 }
@@ -2313,7 +2317,7 @@ function ackUpdate(id, status) {
   if (idx === -1) return;
   const note = (document.getElementById('acknote-'+id) || {}).value || all[idx].ackNote || '';
   all[idx] = { ...all[idx], ack: status, ackDate: new Date().toISOString(), ackNote: note };
-  setUpdates(all.filter(u => !SEED_UPDATES.find(s => s.id === u.id)));
+  setUpdates(all);
   renderUpdates();
   toast('Response saved.');
 }
@@ -2323,7 +2327,7 @@ function closeUpdate(id) {
   const idx = all.findIndex(u => u.id === id);
   if (idx === -1) return;
   all[idx] = { ...all[idx], closed: true };
-  setUpdates(all.filter(u => !SEED_UPDATES.find(s => s.id === u.id)));
+  setUpdates(all);
   renderUpdates();
   toast('Update closed.');
 }
@@ -2335,7 +2339,7 @@ function saveAckNote(id) {
   const idx = all.findIndex(u => u.id === id);
   if (idx === -1) return;
   all[idx] = { ...all[idx], ackNote: ta.value.trim() };
-  setUpdates(all.filter(u => !SEED_UPDATES.find(s => s.id === u.id)));
+  setUpdates(all);
   toast('Note saved.');
 }
 
@@ -3086,7 +3090,7 @@ function generatePaySlip(periodNum) {
   };
   existing.push(ps);
   _savePaySlips(existing);
-  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  const updates = getUpdates();
   updates.unshift({ id:'upd-ps-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Announcement', priority:'High', msg:'Pay Slip '+periodNum+' for '+_fmtPSRange(ps)+' has been generated. Please review and approve it in the Pay Slips section. You have 48 hours to review before finalization.', notified:true, requireAck:true });
   setUpdates(updates);
   toast('Pay slip '+periodNum+' generated.');
@@ -3114,7 +3118,7 @@ function disputePaySlip(id) {
   ps.status = 'disputed';
   ps.staffNote = note.trim();
   _savePaySlips(list);
-  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  const updates = getUpdates();
   updates.unshift({ id:'upd-psd-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Feedback', priority:'High', msg:'Pay Slip '+ps.number+' has been disputed by Cyrel: "'+note.trim()+'"', notified:true });
   setUpdates(updates);
   toast('Dispute submitted.');
@@ -3150,7 +3154,7 @@ function finalizePaySlip(id) {
   ps.status = 'finalized';
   ps.finalizedAt = new Date().toISOString();
   _savePaySlips(list);
-  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  const updates = getUpdates();
   updates.unshift({ id:'upd-psf-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Announcement', priority:'Medium', msg:'Pay Slip '+ps.number+' has been finalized. Payment will be processed shortly via '+((ps.paymentMethod||'').toUpperCase()||'TBD')+'.', notified:true, requireAck:true });
   setUpdates(updates);
   toast('Pay slip finalized.');
@@ -3167,7 +3171,7 @@ function markPaySlipPaid(id) {
   ps.paidAt = new Date().toISOString();
   ps.paymentRef = ref.trim() || ('Paid via '+(ps.paymentMethod||'transfer')+' — '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));
   _savePaySlips(list);
-  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  const updates = getUpdates();
   updates.unshift({ id:'upd-psp-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Announcement', priority:'High', msg:'Payment for Pay Slip '+ps.number+' (₱'+ps.netPay.toLocaleString('en-PH',{minimumFractionDigits:2})+') has been sent via '+(ps.paymentMethod||'transfer').toUpperCase()+'. Please confirm receipt in the Pay Slips section.', notified:true, requireAck:true });
   setUpdates(updates);
   toast('Marked as paid.');
@@ -3182,7 +3186,7 @@ function confirmPayReceived(id, received) {
   ps.payReceivedAt = new Date().toISOString();
   _savePaySlips(list);
   if (!received) {
-    const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+    const updates = getUpdates();
     updates.unshift({ id:'upd-psnr-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Feedback', priority:'High', msg:'Cyrel reports NOT receiving payment for Pay Slip '+ps.number+'. Please follow up.', notified:true });
     setUpdates(updates);
   }
