@@ -402,6 +402,56 @@ select {
 .cp-50  { color:var(--warning); }
 .cp-100 { color:var(--success); }
 
+/* ── Pay Slips ── */
+.ps-list { display:flex; flex-direction:column; gap:0.75rem; }
+.ps-card { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--shadow-xs); transition:box-shadow var(--transition); overflow:hidden; }
+.ps-card:hover { box-shadow:var(--shadow-sm); }
+.ps-card-head { display:flex; align-items:center; gap:0.75rem; padding:0.85rem 1.15rem; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.ps-num { font-size:0.82rem; font-weight:800; color:var(--copper); min-width:55px; }
+.ps-period { font-size:0.82rem; font-weight:600; color:var(--text-primary); flex:1; }
+.ps-badge { font-size:0.62rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:0.12rem 0.55rem; border-radius:99px; white-space:nowrap; }
+.ps-badge.draft { background:var(--surface); color:var(--text-muted); }
+.ps-badge.approved { background:rgba(31,184,195,0.1); color:var(--teal); }
+.ps-badge.disputed { background:rgba(245,158,11,0.1); color:var(--warning); }
+.ps-badge.finalized { background:rgba(196,149,106,0.1); color:var(--copper); }
+.ps-badge.paid { background:rgba(34,197,94,0.1); color:var(--success); }
+.ps-card-body { padding:1rem 1.15rem; }
+.ps-stats { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:0.75rem; }
+.ps-stat-lbl { font-size:0.62rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:0.15rem; }
+.ps-stat-val { font-size:1rem; font-weight:800; font-variant-numeric:tabular-nums; }
+.ps-actions { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border); align-items:center; }
+.ps-btn { font-size:0.75rem; font-weight:700; padding:0.35rem 0.85rem; border-radius:var(--radius-sm); border:1.5px solid; cursor:pointer; background:transparent; transition:all 0.15s; }
+.ps-btn-approve { border-color:var(--success); color:var(--success); }
+.ps-btn-approve:hover { background:rgba(34,197,94,0.08); }
+.ps-btn-dispute { border-color:var(--warning); color:var(--warning); }
+.ps-btn-dispute:hover { background:rgba(245,158,11,0.08); }
+.ps-btn-finalize { border-color:var(--copper); color:var(--copper); }
+.ps-btn-finalize:hover { background:var(--copper-glow); }
+.ps-btn-paid { border-color:var(--success); color:var(--success); }
+.ps-btn-paid:hover { background:rgba(34,197,94,0.08); }
+.ps-btn-download { border-color:var(--teal); color:var(--teal); }
+.ps-btn-download:hover { background:rgba(31,184,195,0.08); }
+.ps-btn-received { border-color:var(--success); color:var(--success); }
+.ps-btn-received:hover { background:rgba(34,197,94,0.08); }
+.ps-btn-notreceived { border-color:var(--danger); color:var(--danger); }
+.ps-btn-notreceived:hover { background:rgba(239,68,68,0.08); }
+.ps-btn-generate { background:var(--copper); color:white; border-color:var(--copper); }
+.ps-btn-generate:hover { background:var(--copper-dim); }
+.ps-receipt-ok { font-size:0.72rem; font-weight:700; color:var(--success); display:flex; align-items:center; gap:0.3rem; }
+.ps-receipt-no { font-size:0.72rem; font-weight:700; color:var(--danger); display:flex; align-items:center; gap:0.3rem; }
+.ps-shifts-table { width:100%; border-collapse:collapse; font-size:0.78rem; margin-top:0.5rem; }
+.ps-shifts-table th { padding:0.35rem 0.5rem; text-align:left; font-size:0.62rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); border-bottom:1px solid var(--border); }
+.ps-shifts-table td { padding:0.35rem 0.5rem; border-bottom:1px solid var(--border); }
+.ps-shifts-table tr:last-child td { border-bottom:none; }
+.ps-method-sel { display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; }
+.ps-method-btn { font-size:0.72rem; font-weight:600; padding:0.25rem 0.7rem; border-radius:99px; border:1.5px solid var(--border); cursor:pointer; background:transparent; color:var(--text-secondary); transition:all 0.15s; }
+.ps-method-btn:hover { border-color:var(--copper); color:var(--copper); }
+.ps-method-btn.selected { border-color:var(--copper); background:var(--copper-glow); color:var(--copper); font-weight:700; }
+.ps-ref-input { width:200px; font-size:0.78rem; padding:0.3rem 0.6rem; }
+.ps-detail-toggle { font-size:0.72rem; color:var(--copper); cursor:pointer; font-weight:600; user-select:none; }
+.ps-detail-toggle:hover { text-decoration:underline; }
+.ps-countdown { font-size:0.68rem; color:var(--text-muted); margin-left:auto; }
+
 /* ── Issues ── */
 .issue-card { border:1px solid var(--border); border-radius:var(--radius-md); padding:1rem 1.15rem; margin-bottom:0.75rem; background:var(--card-bg); box-shadow:var(--shadow-xs); transition:box-shadow var(--transition); }
 .issue-card:hover { box-shadow:var(--shadow-sm); }
@@ -562,6 +612,7 @@ select {
       <div class="nav-section-label" id="nav-section-records" style="display:none">Records</div>
       <div class="nav-item" id="nav-earnings" data-page="earnings" onclick="navigate('earnings')" style="display:none"><span class="nav-icon">&#8369;</span> Earnings</div>
       <div class="nav-item" id="nav-shifts" data-page="shifts" onclick="navigate('shifts')" style="display:none"><span class="nav-icon">&#8986;</span> Shift Log</div>
+      <div class="nav-item" id="nav-payslips" data-page="payslips" onclick="navigate('payslips')" style="display:none"><span class="nav-icon">&#128179;</span> Pay Slips <span class="nav-badge hidden" id="payslips-badge"></span></div>
       <div class="nav-section-label">Account</div>
       <div class="nav-item" data-page="profile" onclick="navigate('profile')"><span class="nav-icon">&#9881;</span> Settings</div>
     </nav>
@@ -753,6 +804,17 @@ select {
         </div>
         <div id="assigned-content">
           <div class="empty-state"><div class="empty-state-icon">&#9776;</div><div class="empty-state-text">Loading...</div></div>
+        </div>
+      </section>
+
+      <!-- Pay Slips -->
+      <section id="page-payslips" class="page-section">
+        <div class="section-header">
+          <div class="section-title" id="payslips-title">Pay Slips</div>
+          <div class="section-desc" id="payslips-desc">View and manage your pay slips.</div>
+        </div>
+        <div id="payslips-content">
+          <div class="empty-state"><div class="empty-state-icon">&#128179;</div><div class="empty-state-text">Loading pay slips...</div></div>
         </div>
       </section>
 
@@ -1075,6 +1137,10 @@ const SEED_TASKS = [
 const SEED_UPDATES = [
   { id:'seed-ace-1', date:'September 2, 2026', type:'Announcement', priority:'Medium', msg:'Hi team! The portal has been updated with a fresh new design and improved performance. Reminder: Next payday is September 3 — please make sure your shift logs and task statuses are up to date before end of day. If you notice anything off, let Boss Jey know. — Ace, AI Work Assistant', notified:true }
 ];
+const SEED_PAYSLIPS = [
+  { id:'ps-0001', number:'#0001', periodStart:'2026-08-12', periodEnd:'2026-08-20', totalHours:21.25, grossPay:1806.70, heldAmount:0, netPay:1806.70, status:'paid', paymentMethod:'gcash', paymentRef:'GCash Transfer — Aug 20, 2026', generatedAt:'2026-08-20T02:55:18Z', approvedAt:'2026-08-20T03:36:41Z', finalizedAt:'2026-08-20T14:35:14Z', paidAt:'2026-08-20T14:35:14Z', payReceived:true, payReceivedAt:'2026-08-20T14:42:12Z' },
+  { id:'ps-0002', number:'#0002', periodStart:'2026-08-21', periodEnd:'2026-09-03', totalHours:16.30, grossPay:1709.41, heldAmount:0, netPay:1709.41, status:'paid', paymentMethod:'gcash', paymentRef:'GCash Transfer — Sep 3, 2026', generatedAt:'2026-09-03T19:05:40Z', approvedAt:'2026-09-03T19:30:00Z', finalizedAt:'2026-09-03T19:30:00Z', paidAt:'2026-09-03T19:30:00Z', payReceived:true, payReceivedAt:'2026-09-03T20:00:00Z' }
+];
 
 function getSession()  { try { return JSON.parse(localStorage.getItem('aw_session')||'null'); } catch { return null; } }
 function setSession(s) { localStorage.setItem('aw_session', JSON.stringify(s)); }
@@ -1117,6 +1183,12 @@ async function loadUserData(username) {
         if (idx === -1) { existing.push(Object.assign({}, st)); changed = true; }
       });
       if (changed) { _udCache[username].assignedTasks = existing; db.collection('users').doc(username).update({ assignedTasks: existing }).catch(()=>{}); }
+      const existingPS = _udCache[username].paySlips || [];
+      let psChanged = false;
+      SEED_PAYSLIPS.forEach(sp => {
+        if (!existingPS.find(p => p.id === sp.id)) { existingPS.push(Object.assign({}, sp)); psChanged = true; }
+      });
+      if (psChanged) { _udCache[username].paySlips = existingPS; db.collection('users').doc(username).update({ paySlips: existingPS }).catch(()=>{}); }
     }
   } catch { _udCache[username] = def; }
   return _udCache[username];
@@ -1161,12 +1233,14 @@ function subscribeStaff() {
       if (pg==='staff') renderStaff();
       if (pg==='issues') renderIssues();
       if (pg==='assigned') renderAssigned();
+      if (pg==='payslips') renderPaySlips();
     } else if (currentUser === 'athanviloria') {
       refreshOverview();
       const activePage = document.querySelector('.nav-item.active');
       const pg = activePage ? activePage.getAttribute('data-page') : '';
       if (pg==='assigned') renderAssigned();
       if (pg==='issues') { renderIssues(); refreshIssuesBadge(); }
+      if (pg==='payslips') renderPaySlips();
     }
   }, ()=>{});
 }
@@ -1206,6 +1280,7 @@ let _updatesPage = 0;
 const UPDATES_PER_PAGE = 10;
 let _shiftsPage = 0;
 const SHIFTS_PER_PAGE = 5;
+let _payslipsExpanded = {};
 const MAX_SHIFT_HRS = 5;
 const DAILY_MIN_WAGE = 525;
 let accountTab  = 'mine';
@@ -1588,6 +1663,7 @@ function enterApp() {
   if (_nav('nav-tasklog'))   _nav('nav-tasklog').style.display   = isBoss ? 'none' : 'flex';
   if (_nav('nav-earnings'))  _nav('nav-earnings').style.display  = isBoss ? 'none' : 'flex';
   if (_nav('nav-shifts'))    _nav('nav-shifts').style.display    = isBoss ? 'none' : 'flex';
+  if (_nav('nav-payslips'))  _nav('nav-payslips').style.display  = 'flex';
   if (_nav('nav-reports'))   _nav('nav-reports').style.display   = isBoss ? 'flex' : 'none';
   if (_nav('nav-dailyreport')) _nav('nav-dailyreport').style.display = isBoss ? 'none' : 'flex';
   const navRecords = document.getElementById('nav-section-records');
@@ -1639,10 +1715,11 @@ function greetUser() {
 // =============================================
 // NAVIGATION
 // =============================================
-const PAGE_TITLES = { overview:'Dashboard', updates:'Updates', accounts:'Clients', tasklog:'Task Log', staff:'Staff View', assigned:'My Tasks', issues:'Issues & Questions', earnings:'Earnings', shifts:'Shift Log', attendance:'Attendance', profile:'Settings', dailyreport:'Daily Report', reports:'Reports' };
+const PAGE_TITLES = { overview:'Dashboard', updates:'Updates', accounts:'Clients', tasklog:'Task Log', staff:'Staff View', assigned:'My Tasks', issues:'Issues & Questions', earnings:'Earnings', shifts:'Shift Log', payslips:'Pay Slips', attendance:'Attendance', profile:'Settings', dailyreport:'Daily Report', reports:'Reports' };
 
 function navigate(page) {
   if ((page === 'earnings' || page === 'shifts' || page === 'tasklog' || page === 'dailyreport') && currentUser === BOSS_USERNAME) page = 'overview';
+  if (page === 'payslips' && currentUser !== BOSS_USERNAME && currentUser !== 'athanviloria') page = 'overview';
   if (page === 'reports' && currentUser !== BOSS_USERNAME) page = 'overview';
   document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1661,6 +1738,7 @@ function navigate(page) {
   if (page==='issues')   renderIssues();
   if (page==='earnings') renderEarnings();
   if (page==='shifts')   renderShifts();
+  if (page==='payslips') renderPaySlips();
   if (page==='dailyreport') renderDailyReport();
   if (page==='reports')  renderReports();
   if (page==='profile')  populateSidebar();
@@ -1670,8 +1748,8 @@ function navigate(page) {
 function refreshAll() {
   const _safe = fn => { try { fn(); } catch(e) { console.error(fn.name||'render', e); } };
   _safe(refreshOverview); _safe(renderUpdates);
-  if (currentUser === BOSS_USERNAME) { _safe(renderAssigned); _safe(renderIssues); _safe(refreshReportsBadge); }
-  else { _safe(renderAccounts); _safe(renderAssigned); _safe(renderIssues); _safe(renderEarnings); _safe(renderShifts); _safe(refreshDailyReportBadge); }
+  if (currentUser === BOSS_USERNAME) { _safe(renderAssigned); _safe(renderIssues); _safe(refreshReportsBadge); _safe(renderPaySlips); }
+  else { _safe(renderAccounts); _safe(renderAssigned); _safe(renderIssues); _safe(renderEarnings); _safe(renderShifts); _safe(refreshDailyReportBadge); _safe(renderPaySlips); }
   _safe(refreshUpdatesBadge); _safe(refreshIssuesBadge); _safe(refreshAssignedBadge);
   _safe(updateNotifDot);
 }
@@ -2894,6 +2972,367 @@ function refreshReportsBadge() {
   } else {
     badge.classList.add('hidden');
   }
+}
+
+// =============================================
+// PAY SLIPS
+// =============================================
+function _getPaySlips() {
+  const cd = _udCache['athanviloria'] || getUserData('athanviloria');
+  return cd.paySlips || [];
+}
+function _savePaySlips(list) {
+  const cd = _udCache['athanviloria'] || getUserData('athanviloria');
+  cd.paySlips = list;
+  _udCache['athanviloria'] = cd;
+  db.collection('users').doc('athanviloria').update({ paySlips: list }).catch(()=>{});
+}
+
+function _getAllPayPeriods() {
+  const periods = [];
+  periods.push({ start: new Date('2026-08-12T00:00:00'), end: new Date('2026-08-20T23:59:59.999'), number:'#0001' });
+  let cs = new Date(LAST_PAYDAY.getTime()); cs.setDate(cs.getDate()+1); cs.setHours(0,0,0,0);
+  let num = 2;
+  const today = new Date(); today.setHours(23,59,59,999);
+  while (cs <= today) {
+    const ce = new Date(cs.getTime() + (PAY_CYCLE_DAYS-1)*86400000); ce.setHours(23,59,59,999);
+    periods.push({ start:new Date(cs), end:ce, number:'#'+String(num).padStart(4,'0') });
+    num++;
+    cs = new Date(ce.getTime()+1); cs.setHours(0,0,0,0);
+  }
+  return periods;
+}
+
+function _getShiftsForPeriod(pStart, pEnd) {
+  const cd = _udCache['athanviloria'] || getUserData('athanviloria');
+  const shifts = (cd.shifts||[]).filter(s => {
+    const d = new Date(s.inISO || s.date);
+    return d >= pStart && d <= pEnd;
+  });
+  return shifts.sort((a,b) => new Date(a.inISO||a.date) - new Date(b.inISO||b.date));
+}
+
+function _fmtPSDate(d) { return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function _fmtPSRange(ps) { return _fmtPSDate(ps.periodStart) + ' – ' + _fmtPSDate(ps.periodEnd); }
+
+function generatePaySlip(periodNum) {
+  if (currentUser !== BOSS_USERNAME) { toast('Only the boss can generate pay slips.'); return; }
+  const allPeriods = _getAllPayPeriods();
+  const period = allPeriods.find(p => p.number === periodNum);
+  if (!period) { toast('Pay period not found.'); return; }
+  const existing = _getPaySlips();
+  if (existing.find(p => p.number === periodNum)) { toast('Pay slip already exists for this period.'); return; }
+  const shifts = _getShiftsForPeriod(period.start, period.end);
+  const cd = _udCache['athanviloria'] || getUserData('athanviloria');
+  const rate = cd.hourlyRate || 105;
+  const calcE = s => { const h=s.hours||0; if(s.earned!==undefined) return s.earned; return h<MAX_SHIFT_HRS?h*rate:s.overtime?DAILY_MIN_WAGE+((h-MAX_SHIFT_HRS)*rate):DAILY_MIN_WAGE; };
+  const totalH = shifts.reduce((a,s)=>a+(s.hours||0),0);
+  const gross = shifts.reduce((a,s)=>a+calcE(s),0);
+  const heldAmt = shifts.filter(s=>_isShiftHeld(s)).reduce((a,s)=>a+calcE(s),0);
+  const net = Math.round((gross - heldAmt)*100)/100;
+  const ps = {
+    id: 'ps-'+Date.now(),
+    number: periodNum,
+    periodStart: period.start.toISOString().slice(0,10),
+    periodEnd: period.end.toISOString().slice(0,10),
+    totalHours: Math.round(totalH*100)/100,
+    grossPay: Math.round(gross*100)/100,
+    heldAmount: Math.round(heldAmt*100)/100,
+    netPay: net,
+    hourlyRate: rate,
+    dailyRate: DAILY_MIN_WAGE,
+    status: 'draft',
+    paymentMethod: null,
+    paymentRef: '',
+    staffNote: '',
+    generatedAt: new Date().toISOString(),
+    approvedAt: null,
+    finalizedAt: null,
+    paidAt: null,
+    payReceived: null,
+    payReceivedAt: null
+  };
+  existing.push(ps);
+  _savePaySlips(existing);
+  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  updates.unshift({ id:'upd-ps-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Announcement', priority:'High', msg:'Pay Slip '+periodNum+' for '+_fmtPSRange(ps)+' has been generated. Please review and approve it in the Pay Slips section. You have 48 hours to review before finalization.', notified:true, requireAck:true });
+  setUpdates(updates);
+  toast('Pay slip '+periodNum+' generated.');
+  renderPaySlips();
+}
+
+function approvePaySlip(id) {
+  const list = _getPaySlips();
+  const ps = list.find(p=>p.id===id);
+  if (!ps || ps.status !== 'draft') { toast('Cannot approve this pay slip.'); return; }
+  if (!ps.paymentMethod) { toast('Please select a payment method first.'); return; }
+  ps.status = 'approved';
+  ps.approvedAt = new Date().toISOString();
+  _savePaySlips(list);
+  toast('Pay slip approved. Waiting for boss to finalize.');
+  renderPaySlips();
+}
+
+function disputePaySlip(id) {
+  const note = (document.getElementById('dispute-note-'+id)||{}).value||'';
+  if (!note.trim()) { toast('Please describe the issue.'); return; }
+  const list = _getPaySlips();
+  const ps = list.find(p=>p.id===id);
+  if (!ps || ps.status !== 'draft') { toast('Cannot dispute this pay slip.'); return; }
+  ps.status = 'disputed';
+  ps.staffNote = note.trim();
+  _savePaySlips(list);
+  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  updates.unshift({ id:'upd-psd-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Feedback', priority:'High', msg:'Pay Slip '+ps.number+' has been disputed by Cyrel: "'+note.trim()+'"', notified:true });
+  setUpdates(updates);
+  toast('Dispute submitted.');
+  renderPaySlips();
+}
+
+function resolveDispute(id) {
+  if (currentUser !== BOSS_USERNAME) return;
+  const list = _getPaySlips();
+  const ps = list.find(p=>p.id===id);
+  if (!ps || ps.status !== 'disputed') return;
+  ps.status = 'draft';
+  ps.staffNote = '';
+  _savePaySlips(list);
+  toast('Dispute resolved. Pay slip returned to draft.');
+  renderPaySlips();
+}
+
+function selectPaymentMethod(id, method) {
+  const list = _getPaySlips();
+  const ps = list.find(p=>p.id===id);
+  if (!ps || (ps.status !== 'draft' && ps.status !== 'disputed')) return;
+  ps.paymentMethod = method;
+  _savePaySlips(list);
+  renderPaySlips();
+}
+
+function finalizePaySlip(id) {
+  if (currentUser !== BOSS_USERNAME) { toast('Only the boss can finalize.'); return; }
+  const list = _getPaySlips();
+  const ps = list.find(p=>p.id===id);
+  if (!ps || ps.status !== 'approved') { toast('Staff must approve first.'); return; }
+  ps.status = 'finalized';
+  ps.finalizedAt = new Date().toISOString();
+  _savePaySlips(list);
+  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  updates.unshift({ id:'upd-psf-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Announcement', priority:'Medium', msg:'Pay Slip '+ps.number+' has been finalized. Payment will be processed shortly via '+((ps.paymentMethod||'').toUpperCase()||'TBD')+'.', notified:true, requireAck:true });
+  setUpdates(updates);
+  toast('Pay slip finalized.');
+  renderPaySlips();
+}
+
+function markPaySlipPaid(id) {
+  if (currentUser !== BOSS_USERNAME) return;
+  const ref = (document.getElementById('payref-'+id)||{}).value||'';
+  const list = _getPaySlips();
+  const ps = list.find(p=>p.id===id);
+  if (!ps || ps.status !== 'finalized') return;
+  ps.status = 'paid';
+  ps.paidAt = new Date().toISOString();
+  ps.paymentRef = ref.trim() || ('Paid via '+(ps.paymentMethod||'transfer')+' — '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));
+  _savePaySlips(list);
+  const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+  updates.unshift({ id:'upd-psp-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Announcement', priority:'High', msg:'Payment for Pay Slip '+ps.number+' (₱'+ps.netPay.toLocaleString('en-PH',{minimumFractionDigits:2})+') has been sent via '+(ps.paymentMethod||'transfer').toUpperCase()+'. Please confirm receipt in the Pay Slips section.', notified:true, requireAck:true });
+  setUpdates(updates);
+  toast('Marked as paid.');
+  renderPaySlips();
+}
+
+function confirmPayReceived(id, received) {
+  const list = _getPaySlips();
+  const ps = list.find(p=>p.id===id);
+  if (!ps || ps.status !== 'paid') return;
+  ps.payReceived = received;
+  ps.payReceivedAt = new Date().toISOString();
+  _savePaySlips(list);
+  if (!received) {
+    const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
+    updates.unshift({ id:'upd-psnr-'+Date.now(), date:new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}), type:'Feedback', priority:'High', msg:'Cyrel reports NOT receiving payment for Pay Slip '+ps.number+'. Please follow up.', notified:true });
+    setUpdates(updates);
+  }
+  toast(received ? 'Payment receipt confirmed.' : 'Marked as not received. Boss has been notified.');
+  renderPaySlips();
+}
+
+function downloadPaySlip(id) {
+  const list = _getPaySlips();
+  const ps = list.find(p=>p.id===id);
+  if (!ps) return;
+  const shifts = _getShiftsForPeriod(new Date(ps.periodStart+'T00:00:00'), new Date(ps.periodEnd+'T23:59:59.999'));
+  const rate = ps.hourlyRate || 105;
+  const dailyR = ps.dailyRate || DAILY_MIN_WAGE;
+  const calcE = s => { const h=s.hours||0; if(s.earned!==undefined) return s.earned; return h<MAX_SHIFT_HRS?h*rate:s.overtime?dailyR+((h-MAX_SHIFT_HRS)*rate):dailyR; };
+  const fmt = v => '₱'+Number(v).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const statusLabel = {draft:'Draft',approved:'Approved',disputed:'Disputed',finalized:'Finalized',paid:'Paid'}[ps.status]||ps.status;
+  const shiftRows = shifts.map(s => '<tr><td>'+esc(s.date)+'</td><td>'+esc(s.inTime)+' → '+esc(s.outTime)+'</td><td style="text-align:right">'+(s.hours||0).toFixed(2)+'</td><td style="text-align:right">'+fmt(calcE(s))+'</td></tr>').join('');
+  const logoSVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='26' fill='%231E293B'/%3E%3Cpolygon points='60,22 90,39 90,73 60,90 30,73 30,39' fill='%23334155' stroke='%23475569' stroke-width='1.5'/%3E%3Cpolygon points='38,42 48,42 51.5,72' fill='%2394A3B8'/%3E%3Cpolygon points='48,42 60,42 60,57 51.5,72' fill='%23CBD5E1'/%3E%3Cpolygon points='60,42 72,42 68.5,72 60,57' fill='%23CBD5E1'/%3E%3Cpolygon points='72,42 82,42 68.5,72' fill='%23F8FAFC'/%3E%3C/svg%3E";
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pay Slip '+esc(ps.number)+'</title><style>'+
+    '*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#1A1F36;padding:2rem;max-width:700px;margin:0 auto;font-size:14px}'+
+    '.header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #C4956A}'+
+    '.logo{width:44px;height:44px;border-radius:10px}.brand{font-weight:800;font-size:1.1rem;color:#1E293B;line-height:1.15}.brand-sub{color:#C4956A;font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase}'+
+    '.ps-title{font-size:1.3rem;font-weight:800;margin-bottom:0.25rem}.ps-sub{color:#64748B;font-size:0.85rem}'+
+    '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin:1.25rem 0;padding:1rem;background:#F7F8FC;border-radius:10px}'+
+    '.info-label{font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#8492A6}.info-val{font-size:0.9rem;font-weight:700}'+
+    'table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.85rem}th{padding:0.5rem;text-align:left;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#8492A6;border-bottom:2px solid #E4E8EE}'+
+    'td{padding:0.5rem;border-bottom:1px solid #E4E8EE}.total-row td{font-weight:800;border-top:2px solid #1E293B;border-bottom:none;font-size:0.95rem}'+
+    '.payment{margin-top:1rem;padding:0.85rem 1rem;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);border-radius:8px;font-size:0.82rem}'+
+    '.footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #E4E8EE;font-size:0.72rem;color:#8492A6;text-align:center;line-height:1.6}'+
+    '.note{font-size:0.72rem;color:#8492A6;margin-top:0.75rem;font-style:italic}'+
+    '@media print{body{padding:1rem}}'+
+    '</style></head><body>'+
+    '<div class="header"><img class="logo" src="'+logoSVG+'"><div><div class="brand">Workflow — Assistant Portal</div><div class="brand-sub">Powered by Hedgi AI, LLC</div></div></div>'+
+    '<div class="ps-title">Pay Slip '+esc(ps.number)+'</div><div class="ps-sub">'+_fmtPSRange(ps)+'</div>'+
+    '<div class="info-grid">'+
+      '<div><div class="info-label">Employee</div><div class="info-val">Cyrel Athan A. Viloria</div></div>'+
+      '<div><div class="info-label">Pay Slip No.</div><div class="info-val">'+esc(ps.number)+'</div></div>'+
+      '<div><div class="info-label">Pay Period</div><div class="info-val">'+_fmtPSRange(ps)+'</div></div>'+
+      '<div><div class="info-label">Status</div><div class="info-val" style="color:'+(ps.status==='paid'?'#22C55E':'#C4956A')+'">'+statusLabel+'</div></div>'+
+      '<div><div class="info-label">Hourly Rate</div><div class="info-val">'+fmt(rate)+'</div></div>'+
+      '<div><div class="info-label">Daily Rate (5 hrs)</div><div class="info-val">'+fmt(dailyR)+'</div></div>'+
+    '</div>'+
+    '<table><thead><tr><th>Date</th><th>Clock In → Out</th><th style="text-align:right">Hours</th><th style="text-align:right">Earned</th></tr></thead><tbody>'+
+    shiftRows+
+    '<tr class="total-row"><td colspan="2">Total</td><td style="text-align:right">'+ps.totalHours.toFixed(2)+'</td><td style="text-align:right">'+fmt(ps.grossPay)+'</td></tr>'+
+    (ps.heldAmount > 0 ? '<tr><td colspan="3" style="color:#EF4444;font-weight:600">Held (no same-day report)</td><td style="text-align:right;color:#EF4444;font-weight:600">-'+fmt(ps.heldAmount)+'</td></tr>' : '')+
+    '<tr class="total-row"><td colspan="2" style="font-size:1.05rem">Net Pay</td><td></td><td style="text-align:right;font-size:1.05rem;color:#C4956A">'+fmt(ps.netPay)+'</td></tr>'+
+    '</tbody></table>'+
+    (ps.paymentMethod ? '<div class="payment"><strong>Payment Method:</strong> '+(ps.paymentMethod==='gcash'?'GCash':'Personal / Cash')+(ps.paymentRef?' — '+esc(ps.paymentRef):'')+(ps.paidAt?' — Paid '+_fmtPSDate(ps.paidAt):'')+'</div>':'')+
+    (ps.payReceived===true ? '<div style="margin-top:0.5rem;font-size:0.78rem;color:#22C55E;font-weight:600">✓ Payment received — confirmed '+_fmtPSDate(ps.payReceivedAt)+'</div>':'')+
+    '<div class="note">This pay slip is issued for your records. Engagement is as an independent contractor (Non W-2) under a trial arrangement.<br>Ref: Wage Order No. IVA-22 — Region IV-A (CALABARZON), 1st Class Municipality, Non-Agriculture</div>'+
+    '<div class="footer">Workflow — Assistant Portal<br>Powered by Hedgi AI, LLC<br>Issued by Ace — AI Work Assistant to Jey Asayas</div>'+
+    '</body></html>';
+  const w = window.open('','_blank','width=750,height=900');
+  if (w) { w.document.write(html); w.document.close(); setTimeout(()=>w.print(), 500); }
+  else toast('Please allow pop-ups to download pay slips.');
+}
+
+function _renderPaySlipCard(ps) {
+  const isBoss = currentUser === BOSS_USERNAME;
+  const isStaff = currentUser === 'athanviloria';
+  const statusLabel = {draft:'Draft',approved:'Approved',disputed:'Disputed',finalized:'Finalized',paid:'Paid'}[ps.status]||ps.status;
+  const fmt = v => '₱'+Number(v).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const expanded = _payslipsExpanded[ps.id];
+  const shifts = expanded ? _getShiftsForPeriod(new Date(ps.periodStart+'T00:00:00'), new Date(ps.periodEnd+'T23:59:59.999')) : [];
+  const rate = ps.hourlyRate || 105;
+  const dailyR = ps.dailyRate || DAILY_MIN_WAGE;
+  const calcE = s => { const h=s.hours||0; if(s.earned!==undefined) return s.earned; return h<MAX_SHIFT_HRS?h*rate:s.overtime?dailyR+((h-MAX_SHIFT_HRS)*rate):dailyR; };
+
+  let actions = '';
+  if (ps.status === 'draft' && isStaff) {
+    const methods = '<div class="ps-method-sel" style="margin-top:0.5rem"><span style="font-size:0.68rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em">Payment:</span>'+
+      '<button class="ps-method-btn'+(ps.paymentMethod==='gcash'?' selected':'')+'" onclick="selectPaymentMethod(\''+ps.id+'\',\'gcash\')">GCash</button>'+
+      '<button class="ps-method-btn'+(ps.paymentMethod==='personal'?' selected':'')+'" onclick="selectPaymentMethod(\''+ps.id+'\',\'personal\')">Personal / Cash</button></div>';
+    const disputeBox = '<div style="margin-top:0.5rem"><textarea id="dispute-note-'+ps.id+'" placeholder="Describe the issue..." style="font-size:0.78rem;padding:0.35rem 0.6rem;resize:vertical;width:100%;max-width:300px;height:2.5rem"></textarea></div>';
+    const genAt = new Date(ps.generatedAt);
+    const hoursLeft = Math.max(0, 48 - (Date.now() - genAt.getTime())/3600000);
+    const countdownTxt = hoursLeft > 0 ? '<span class="ps-countdown">'+Math.floor(hoursLeft)+'h left to review</span>' : '';
+    actions = methods + '<div class="ps-actions">'+
+      '<button class="ps-btn ps-btn-approve" onclick="approvePaySlip(\''+ps.id+'\')">✓ Approve</button>'+
+      '<button class="ps-btn ps-btn-dispute" onclick="disputePaySlip(\''+ps.id+'\')">✗ Dispute</button>'+
+      countdownTxt+'</div>'+disputeBox;
+  }
+  if (ps.status === 'draft' && isBoss) {
+    actions = '<div class="ps-actions"><span style="font-size:0.72rem;color:var(--text-muted)">⏳ Waiting for staff to review and approve</span>'+(ps.paymentMethod?'<span style="font-size:0.72rem;color:var(--copper);font-weight:600">Method: '+(ps.paymentMethod==='gcash'?'GCash':'Personal')+'</span>':'')+'</div>';
+  }
+  if (ps.status === 'disputed') {
+    actions = '<div class="ps-actions"><span style="font-size:0.78rem;color:var(--warning);font-weight:600">⚠ Disputed'+(ps.staffNote?' — "'+esc(ps.staffNote)+'"':'')+'</span>'+
+      (isBoss ? '<button class="ps-btn ps-btn-finalize" onclick="resolveDispute(\''+ps.id+'\')">Resolve & Return to Draft</button>' : '')+'</div>';
+  }
+  if (ps.status === 'approved' && isBoss) {
+    actions = '<div class="ps-actions"><button class="ps-btn ps-btn-finalize" onclick="finalizePaySlip(\''+ps.id+'\')">✓ Finalize Pay Slip</button><span style="font-size:0.72rem;color:var(--teal);font-weight:600">Method: '+(ps.paymentMethod==='gcash'?'GCash':'Personal / Cash')+'</span></div>';
+  }
+  if (ps.status === 'approved' && isStaff) {
+    actions = '<div class="ps-actions"><span style="font-size:0.72rem;color:var(--teal);font-weight:600">✓ Approved — waiting for boss to finalize</span></div>';
+  }
+  if (ps.status === 'finalized') {
+    if (isBoss) {
+      actions = '<div class="ps-actions"><input type="text" class="ps-ref-input" id="payref-'+ps.id+'" placeholder="Payment ref # (optional)"><button class="ps-btn ps-btn-paid" onclick="markPaySlipPaid(\''+ps.id+'\')">💰 Mark as Paid</button><button class="ps-btn ps-btn-download" onclick="downloadPaySlip(\''+ps.id+'\')">⬇ Download</button></div>';
+    } else {
+      actions = '<div class="ps-actions"><span style="font-size:0.72rem;color:var(--copper);font-weight:600">Finalized — payment being processed</span><button class="ps-btn ps-btn-download" onclick="downloadPaySlip(\''+ps.id+'\')">⬇ Download</button></div>';
+    }
+  }
+  if (ps.status === 'paid') {
+    let receiptHtml = '';
+    if (ps.payReceived === true) {
+      receiptHtml = '<span class="ps-receipt-ok">✓ Payment Received</span>';
+    } else if (ps.payReceived === false) {
+      receiptHtml = '<span class="ps-receipt-no">✗ Not Received</span>';
+    } else if (isStaff) {
+      receiptHtml = '<button class="ps-btn ps-btn-received" onclick="confirmPayReceived(\''+ps.id+'\',true)">✓ Received</button><button class="ps-btn ps-btn-notreceived" onclick="confirmPayReceived(\''+ps.id+'\',false)">✗ Not Received</button>';
+    } else if (isBoss && ps.payReceived === null) {
+      receiptHtml = '<span style="font-size:0.72rem;color:var(--text-muted)">⏳ Awaiting staff confirmation</span>';
+    }
+    actions = '<div class="ps-actions"><button class="ps-btn ps-btn-download" onclick="downloadPaySlip(\''+ps.id+'\')">⬇ Download</button>'+receiptHtml+
+      (ps.paymentRef ? '<span style="font-size:0.72rem;color:var(--text-muted)">Ref: '+esc(ps.paymentRef)+'</span>' : '')+'</div>';
+  }
+
+  const shiftsTable = expanded && shifts.length ? '<table class="ps-shifts-table"><thead><tr><th>Date</th><th>Clock In → Out</th><th style="text-align:right">Hours</th><th style="text-align:right">Earned</th></tr></thead><tbody>'+
+    shifts.map(s=>'<tr><td>'+esc(s.date)+'</td><td>'+esc(s.inTime)+' → '+esc(s.outTime)+'</td><td style="text-align:right">'+(s.hours||0).toFixed(2)+'</td><td style="text-align:right">'+fmt(calcE(s))+'</td></tr>').join('')+
+    '</tbody></table>' : '';
+
+  return '<div class="ps-card">'+
+    '<div class="ps-card-head">'+
+      '<span class="ps-num">'+esc(ps.number)+'</span>'+
+      '<span class="ps-period">'+_fmtPSRange(ps)+'</span>'+
+      '<span class="ps-badge '+ps.status+'">'+statusLabel+'</span>'+
+    '</div>'+
+    '<div class="ps-card-body">'+
+      '<div class="ps-stats">'+
+        '<div><div class="ps-stat-lbl">Hours</div><div class="ps-stat-val">'+ps.totalHours.toFixed(2)+'</div></div>'+
+        '<div><div class="ps-stat-lbl">Gross</div><div class="ps-stat-val">'+fmt(ps.grossPay)+'</div></div>'+
+        (ps.heldAmount > 0 ? '<div><div class="ps-stat-lbl">Held</div><div class="ps-stat-val" style="color:var(--danger)">-'+fmt(ps.heldAmount)+'</div></div>' : '')+
+        '<div><div class="ps-stat-lbl">Net Pay</div><div class="ps-stat-val" style="color:var(--copper)">'+fmt(ps.netPay)+'</div></div>'+
+        (ps.paymentMethod ? '<div><div class="ps-stat-lbl">Method</div><div class="ps-stat-val" style="font-size:0.82rem">'+(ps.paymentMethod==='gcash'?'GCash':'Personal')+'</div></div>' : '')+
+      '</div>'+
+      '<span class="ps-detail-toggle" onclick="_payslipsExpanded[\''+ps.id+'\']=!_payslipsExpanded[\''+ps.id+'\'];renderPaySlips()">'+(expanded?'▾ Hide shifts':'▸ Show shifts ('+ps.totalHours.toFixed(2)+' hrs)')+'</span>'+
+      shiftsTable+
+      actions+
+    '</div></div>';
+}
+
+function renderPaySlips() {
+  const el = document.getElementById('payslips-content');
+  if (!el) return;
+  const isBoss = currentUser === BOSS_USERNAME;
+  const descEl = document.getElementById('payslips-desc');
+  if (descEl) descEl.textContent = isBoss ? "Manage pay slips — generate, finalize, and track payments." : "View and manage your pay slips.";
+  const paySlips = _getPaySlips();
+  const sorted = [...paySlips].sort((a,b) => {
+    const numA = parseInt((a.number||'').replace('#','')) || 0;
+    const numB = parseInt((b.number||'').replace('#','')) || 0;
+    return numB - numA;
+  });
+
+  let generateBtn = '';
+  if (isBoss) {
+    const allPeriods = _getAllPayPeriods();
+    const missing = allPeriods.filter(p => !paySlips.find(ps => ps.number === p.number));
+    if (missing.length > 0) {
+      generateBtn = '<div style="margin-bottom:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center"><span style="font-size:0.78rem;font-weight:600;color:var(--text-secondary)">Generate:</span>'+
+        missing.map(p => '<button class="ps-btn ps-btn-generate" onclick="generatePaySlip(\''+p.number+'\')">'+p.number+' ('+p.start.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+p.end.toLocaleDateString('en-US',{month:'short',day:'numeric'})+')</button>').join('')+'</div>';
+    }
+  }
+
+  const actionNeeded = sorted.filter(ps => {
+    if (isBoss) return ps.status === 'approved' || ps.status === 'finalized' || ps.status === 'disputed' || (ps.status === 'paid' && ps.payReceived === false);
+    return ps.status === 'draft' || (ps.status === 'paid' && ps.payReceived === null);
+  });
+  const badge = document.getElementById('payslips-badge');
+  if (badge) {
+    if (actionNeeded.length > 0) { badge.textContent = actionNeeded.length; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  }
+
+  if (sorted.length === 0 && !generateBtn) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128179;</div><div class="empty-state-text">No pay slips yet.</div></div>';
+    return;
+  }
+
+  el.innerHTML = generateBtn + '<div class="ps-list">' + sorted.map(ps => _renderPaySlipCard(ps)).join('') + '</div>';
 }
 
 // =============================================
