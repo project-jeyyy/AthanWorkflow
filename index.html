@@ -415,6 +415,12 @@ select {
 .ps-badge.disputed { background:rgba(245,158,11,0.1); color:var(--warning); }
 .ps-badge.finalized { background:rgba(196,149,106,0.1); color:var(--copper); }
 .ps-badge.paid { background:rgba(34,197,94,0.1); color:var(--success); }
+.ps-badge.in-progress { background:rgba(99,102,241,0.1); color:#6366F1; }
+.ps-inprogress-card { background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius); padding:1rem 1.1rem; margin-bottom:0.75rem; display:flex; align-items:center; gap:1rem; }
+.ps-inprogress-card .ps-ip-icon { font-size:1.5rem; opacity:0.7; }
+.ps-inprogress-card .ps-ip-body { flex:1; }
+.ps-inprogress-card .ps-ip-title { font-weight:700; font-size:0.88rem; color:var(--text-primary); }
+.ps-inprogress-card .ps-ip-sub { font-size:0.75rem; color:var(--text-muted); margin-top:0.15rem; }
 .ps-card-body { padding:1rem 1.15rem; }
 .ps-stats { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:0.75rem; }
 .ps-stat-lbl { font-size:0.62rem; font-weight:600; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-muted); margin-bottom:0.15rem; }
@@ -2993,8 +2999,8 @@ function _getAllPayPeriods() {
   periods.push({ start: new Date('2026-08-12T00:00:00'), end: new Date('2026-08-20T23:59:59.999'), number:'#0001' });
   let cs = new Date(LAST_PAYDAY.getTime()); cs.setDate(cs.getDate()+1); cs.setHours(0,0,0,0);
   let num = 2;
-  const today = new Date(); today.setHours(23,59,59,999);
-  while (cs <= today) {
+  const now = new Date();
+  while (cs <= now) {
     const ce = new Date(cs.getTime() + (PAY_CYCLE_DAYS-1)*86400000); ce.setHours(23,59,59,999);
     periods.push({ start:new Date(cs), end:ce, number:'#'+String(num).padStart(4,'0') });
     num++;
@@ -3020,6 +3026,7 @@ function generatePaySlip(periodNum) {
   const allPeriods = _getAllPayPeriods();
   const period = allPeriods.find(p => p.number === periodNum);
   if (!period) { toast('Pay period not found.'); return; }
+  if (new Date() <= period.end) { toast('This pay period is still in progress. Pay slip will be available after '+period.end.toLocaleDateString('en-US',{month:'short',day:'numeric'})+'.'); return; }
   const existing = _getPaySlips();
   if (existing.find(p => p.number === periodNum)) { toast('Pay slip already exists for this period.'); return; }
   const shifts = _getShiftsForPeriod(period.start, period.end);
@@ -3307,14 +3314,25 @@ function renderPaySlips() {
     return numB - numA;
   });
 
+  const allPeriods = _getAllPayPeriods();
+  const now = new Date();
+  const missing = allPeriods.filter(p => !paySlips.find(ps => ps.number === p.number));
+  const ready = missing.filter(p => now > p.end);
+  const inProgress = missing.filter(p => now <= p.end);
+
   let generateBtn = '';
-  if (isBoss) {
-    const allPeriods = _getAllPayPeriods();
-    const missing = allPeriods.filter(p => !paySlips.find(ps => ps.number === p.number));
-    if (missing.length > 0) {
-      generateBtn = '<div style="margin-bottom:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center"><span style="font-size:0.78rem;font-weight:600;color:var(--text-secondary)">Generate:</span>'+
-        missing.map(p => '<button class="ps-btn ps-btn-generate" onclick="generatePaySlip(\''+p.number+'\')">'+p.number+' ('+p.start.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+p.end.toLocaleDateString('en-US',{month:'short',day:'numeric'})+')</button>').join('')+'</div>';
-    }
+  if (isBoss && ready.length > 0) {
+    generateBtn = '<div style="margin-bottom:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center"><span style="font-size:0.78rem;font-weight:600;color:var(--text-secondary)">Generate:</span>'+
+      ready.map(p => '<button class="ps-btn ps-btn-generate" onclick="generatePaySlip(\''+p.number+'\')">'+p.number+' ('+p.start.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+p.end.toLocaleDateString('en-US',{month:'short',day:'numeric'})+')</button>').join('')+'</div>';
+  }
+
+  let inProgressHtml = '';
+  if (inProgress.length > 0) {
+    const daysLeft = p => Math.max(0, Math.ceil((p.end.getTime() - now.getTime()) / 86400000));
+    inProgressHtml = inProgress.map(p => '<div class="ps-inprogress-card">'+
+      '<div class="ps-ip-icon">&#9203;</div>'+
+      '<div class="ps-ip-body"><div class="ps-ip-title">'+p.number+' <span class="ps-badge in-progress">In Progress</span></div>'+
+      '<div class="ps-ip-sub">'+p.start.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+p.end.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' &middot; '+daysLeft(p)+' day'+(daysLeft(p)!==1?'s':'')+' remaining</div></div></div>').join('');
   }
 
   const actionNeeded = sorted.filter(ps => {
@@ -3327,12 +3345,12 @@ function renderPaySlips() {
     else badge.classList.add('hidden');
   }
 
-  if (sorted.length === 0 && !generateBtn) {
+  if (sorted.length === 0 && !generateBtn && !inProgressHtml) {
     el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128179;</div><div class="empty-state-text">No pay slips yet.</div></div>';
     return;
   }
 
-  el.innerHTML = generateBtn + '<div class="ps-list">' + sorted.map(ps => _renderPaySlipCard(ps)).join('') + '</div>';
+  el.innerHTML = generateBtn + inProgressHtml + '<div class="ps-list">' + sorted.map(ps => _renderPaySlipCard(ps)).join('') + '</div>';
 }
 
 // =============================================
