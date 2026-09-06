@@ -1246,6 +1246,7 @@ function subscribeStaff() {
       const activePage = document.querySelector('.nav-item.active');
       const pg = activePage ? activePage.getAttribute('data-page') : '';
       if (pg==='staff') renderStaff();
+      if (pg==='accounts') renderAccounts();
       if (pg==='issues') renderIssues();
       if (pg==='assigned') renderAssigned();
       if (pg==='payslips') renderPaySlips();
@@ -1767,7 +1768,7 @@ function navigate(page) {
 function refreshAll() {
   const _safe = fn => { try { fn(); } catch(e) { console.error(fn.name||'render', e); } };
   _safe(refreshOverview); _safe(renderUpdates);
-  if (currentUser === BOSS_USERNAME) { _safe(renderAssigned); _safe(renderIssues); _safe(refreshReportsBadge); _safe(renderPaySlips); }
+  if (currentUser === BOSS_USERNAME) { _safe(renderAccounts); _safe(renderAssigned); _safe(renderIssues); _safe(refreshReportsBadge); _safe(renderPaySlips); }
   else { _safe(renderAccounts); _safe(renderAssigned); _safe(renderIssues); _safe(renderEarnings); _safe(renderShifts); _safe(refreshDailyReportBadge); _safe(renderPaySlips); }
   _safe(refreshUpdatesBadge); _safe(refreshIssuesBadge); _safe(refreshAssignedBadge);
   _safe(updateNotifDot);
