@@ -2239,17 +2239,38 @@ function _visibleUpdates() {
   return all.filter(u => u.notified);
 }
 
+function _updSortKey(u) {
+  if (u.closed) return 2;
+  if (!u.ack && u.notified) return 0;
+  return 1;
+}
+
 function renderUpdates() {
-  const updates = [..._visibleUpdates()].sort((a,b)=>(_PRIO_ORDER[a.priority||'Medium']||1)-(_PRIO_ORDER[b.priority||'Medium']||1));
+  const updates = [..._visibleUpdates()].sort((a,b) => {
+    const ga = _updSortKey(a), gb = _updSortKey(b);
+    if (ga !== gb) return ga - gb;
+    return (_PRIO_ORDER[a.priority||'Medium']||1) - (_PRIO_ORDER[b.priority||'Medium']||1);
+  });
   const el = document.getElementById('updates-list');
   if (updates.length === 0) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📬</div><div class="empty-state-text">No updates posted yet.</div></div>'; return; }
+
+  const isBoss = currentUser === BOSS_USERNAME;
+  const isStaff = !isBoss && !managerAccessMode;
+  const pendingCount = updates.filter(u => !u.closed && !u.ack && u.notified).length;
+  let statusBar = '';
+  if (isBoss && pendingCount > 0) {
+    statusBar = '<div style="margin-bottom:0.75rem;padding:0.6rem 0.85rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius);display:flex;align-items:center;gap:0.5rem;font-size:0.78rem"><span style="font-weight:700;color:var(--warning)">⏳ '+pendingCount+' update'+(pendingCount!==1?'s':'')+' pending response</span><span style="color:var(--text-muted)">from Cyrel</span></div>';
+  } else if (isStaff && pendingCount > 0) {
+    statusBar = '<div style="margin-bottom:0.75rem;padding:0.6rem 0.85rem;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:var(--radius);display:flex;align-items:center;gap:0.5rem;font-size:0.78rem"><span style="font-weight:700;color:var(--warning)">⚠ '+pendingCount+' update'+(pendingCount!==1?'s':'')+' need'+(pendingCount===1?'s':'')+' your response</span></div>';
+  }
+
   const totalPages = Math.max(1, Math.ceil(updates.length / UPDATES_PER_PAGE));
   if (_updatesPage >= totalPages) _updatesPage = totalPages - 1;
   if (_updatesPage < 0) _updatesPage = 0;
   const start = _updatesPage * UPDATES_PER_PAGE;
   const pageItems = updates.slice(start, start + UPDATES_PER_PAGE);
   const showingTo = Math.min(start + UPDATES_PER_PAGE, updates.length);
-  el.innerHTML = pageItems.map(_renderUpdateCard).join('') +
+  el.innerHTML = statusBar + pageItems.map(_renderUpdateCard).join('') +
     (updates.length > UPDATES_PER_PAGE ? '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;margin-top:0.5rem;border-top:1px solid var(--border);font-size:0.78rem">' +
       '<span style="color:var(--text-muted)">Showing '+(start+1)+'–'+showingTo+' of '+updates.length+'</span>' +
       '<div style="display:flex;gap:0.4rem">' +
@@ -2327,10 +2348,13 @@ function markUpdatesSeen() {
 
 function refreshUpdatesBadge() {
   userData = getUserData(currentUser);
-  const unseen = Math.max(0, _visibleUpdates().length - (userData.seenUpdates||0));
+  const all = _visibleUpdates();
+  const pending = all.filter(u => !u.closed && !u.ack && u.notified).length;
+  const unseen = Math.max(0, all.length - (userData.seenUpdates||0));
+  const count = Math.max(pending, unseen);
   const b = document.getElementById('updates-badge');
   if (!b) return;
-  if (unseen>0) { b.textContent=unseen; b.classList.remove('hidden'); } else { b.classList.add('hidden'); }
+  if (count>0) { b.textContent=count; b.classList.remove('hidden'); } else { b.classList.add('hidden'); }
   updateNotifDot();
 }
 
