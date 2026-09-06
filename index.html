@@ -735,11 +735,6 @@ select {
           </div>
           <select class="filter-select" id="filter-progress" onchange="renderAccounts()" style="width:auto">
             <option value="">All Status</option>
-            <option value="Not Yet Started">Not Yet Started</option>
-            <option value="In Process">In Process</option>
-            <option value="Completed">Completed</option>
-            <option value="Closed">Closed</option>
-            <option value="__owned__">Athan's Accounts</option>
           </select>
         </div>
         <div class="card">
@@ -2398,10 +2393,10 @@ function renderAccounts() {
   const ownedCount = baseClients.filter(c=>c.owned).length;
   baseClients.forEach(c => { const s = getClientData(clientUser, c.name).overallStatus || 'Not Yet Started'; if (counts[s] !== undefined) counts[s]++; else counts[s] = 1; });
   const total = baseClients.length;
-  const opts = '<option value="">All Status ('+total+')</option>' +
-    OVERALL_STATUS_OPTS.map(o => '<option value="'+o+'"'+(filterProg===o?' selected':'')+'>'+o+' ('+( counts[o]||0)+')</option>').join('') +
-    '<option value="__owned__"'+(filterProg==='__owned__'?' selected':'')+'>Athan\'s Accounts ('+ ownedCount+')</option>';
-  if (filterSel.innerHTML !== opts) filterSel.innerHTML = opts;
+  filterSel.innerHTML = '<option value="">All Status ('+total+')</option>' +
+    OVERALL_STATUS_OPTS.map(o => '<option value="'+o+'">'+o+' ('+( counts[o]||0)+')</option>').join('') +
+    '<option value="__owned__">Athan\'s Accounts ('+ownedCount+')</option>';
+  filterSel.value = filterProg;
   let clients = baseClients;
   if (search) clients = clients.filter(c=>c.name.toLowerCase().includes(search));
   if (filterProg === '__owned__') clients = clients.filter(c=>c.owned);
