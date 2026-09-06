@@ -1195,8 +1195,14 @@ async function loadUserData(username) {
     const accts = _udCache[username].accounts || {};
     let acctChanged = false;
     MASTER_CLIENTS.forEach(mc => {
-      if (mc.reconStatus && accts[mc.name] && !accts[mc.name].overallStatus) {
+      if (mc.reconStatus && accts[mc.name] && (!accts[mc.name].overallStatus || accts[mc.name].overallStatus === 'Not Yet Started') && accts[mc.name].overallStatus !== mc.reconStatus) {
         accts[mc.name].overallStatus = mc.reconStatus;
+        acctChanged = true;
+      }
+    });
+    BOSS_REVIEWED.forEach(name => {
+      if (accts[name] && accts[name].overallStatus !== 'Completed' && accts[name].overallStatus !== 'Closed') {
+        accts[name].overallStatus = 'Completed';
         acctChanged = true;
       }
     });
@@ -1274,7 +1280,8 @@ function getClientData(username, clientName) {
   if (!ud.accounts) ud.accounts = {};
   if (!ud.accounts[clientName]) {
     const mc = MASTER_CLIENTS.find(c => c.name === clientName);
-    const seedStatus = (mc && mc.reconStatus) || '';
+    let seedStatus = (mc && mc.reconStatus) || '';
+    if (BOSS_REVIEWED.has(clientName) && seedStatus !== 'Closed') seedStatus = 'Completed';
     ud.accounts[clientName] = { month:'July', tasks:[], issues:'', comments:'', flagged:false, overallStatus:seedStatus };
   }
   return ud.accounts[clientName];
