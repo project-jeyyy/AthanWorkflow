@@ -336,13 +336,11 @@ select {
 .upd-ack-btn { font-size:0.72rem;font-weight:600;padding:0.22rem 0.65rem;border-radius:99px;border:1.5px solid;cursor:pointer;background:transparent;transition:background 0.15s; }
 .upd-ack-btn.understood  { border-color:var(--success);color:var(--success); }
 .upd-ack-btn.understood:hover  { background:rgba(34,197,94,0.08); }
-.upd-ack-btn.acknowledged{ border-color:var(--teal);color:var(--teal); }
-.upd-ack-btn.acknowledged:hover{ background:rgba(31,184,195,0.08); }
 .upd-ack-btn.confused    { border-color:var(--warning);color:var(--warning); }
 .upd-ack-btn.confused:hover    { background:rgba(245,158,11,0.08); }
 .upd-ack-status { font-size:0.7rem;font-weight:700;padding:0.18rem 0.55rem;border-radius:99px; }
 .upd-ack-status.understood  { background:rgba(34,197,94,0.1);color:var(--success); }
-.upd-ack-status.acknowledged{ background:rgba(31,184,195,0.1);color:var(--teal); }
+.upd-ack-status.needclarification { background:rgba(245,158,11,0.1);color:var(--warning); }
 .upd-ack-status.confused    { background:rgba(245,158,11,0.1);color:var(--warning); }
 .upd-ack-status.pending     { background:var(--surface);color:var(--text-muted); }
 .upd-ack-status.closed      { background:rgba(196,149,106,0.1);color:var(--copper); }
@@ -2135,19 +2133,15 @@ function _renderUpdateCard(u) {
     return '<div class="update-pin prio-'+p.toLowerCase()+' is-closed"><div class="update-dot-col"><div class="update-dot" style="'+_prioDotStyle(p)+'"></div></div><div style="flex:1"><div class="update-meta">'+esc(u.date)+' · <span class="update-tag">'+esc(u.type)+'</span> '+_prioBadge(p)+'</div><div class="update-body">'+esc(u.msg)+'</div>'+ackBar+'</div></div>';
   }
   if (isBoss) {
-    if (!u.notified) {
-      ackBar = '<div class="upd-ack-bar"><button class="upd-notify-btn" onclick="notifyUpdate(\''+u.id+'\')">Notify Athan</button>'+closeBtn+'</div>';
-    } else {
-      const ackLabel = u.ack==='understood'?'✅ Understood':u.ack==='acknowledged'?'✓ Acknowledged':u.ack==='confused'?'❓ Confused':'⏳ Pending Response';
-      ackBar = '<div class="upd-ack-bar"><span style="font-size:0.68rem;color:var(--text-muted)">Notified ·</span><span class="upd-ack-status '+(u.ack||'pending')+'">'+ackLabel+'</span>'+closeBtn+(u.ackNote?'<div style="width:100%"><div class="upd-ack-note">💬 "'+esc(u.ackNote)+'"</div></div>':'')+'</div>';
-    }
+    const ackLabel = u.ack==='understood'?'✅ Understood':u.ack==='needclarification'?'❓ Needs Clarification':'⏳ Pending Response';
+    ackBar = '<div class="upd-ack-bar"><span class="upd-ack-status '+(u.ack||'pending')+'">'+ackLabel+'</span>'+closeBtn+(u.ackNote?'<div style="width:100%"><div class="upd-ack-note">💬 "'+esc(u.ackNote)+'"</div></div>':'')+'</div>';
   }
   if (isStaff && u.notified) {
-    const noteArea = '<div style="width:100%;margin-top:0.5rem;display:flex;gap:0.4rem;align-items:flex-end"><textarea id="acknote-'+u.id+'" rows="2" placeholder="Add a note or reply (optional)..." style="flex:1;font-size:0.78rem;resize:none;border-radius:var(--radius-sm);border:1px solid var(--border);padding:0.35rem 0.55rem;background:var(--input-bg);color:var(--text-primary)">'+esc(u.ackNote||'')+'</textarea><button class="btn btn-sm" onclick="saveAckNote(\''+u.id+'\')" style="font-size:0.72rem;padding:0.28rem 0.65rem;white-space:nowrap">Save</button></div>';
+    const noteArea = '<div style="width:100%;margin-top:0.5rem;display:flex;gap:0.4rem;align-items:flex-end"><textarea id="acknote-'+u.id+'" rows="2" placeholder="Add a note or question (optional)..." style="flex:1;font-size:0.78rem;resize:none;border-radius:var(--radius-sm);border:1px solid var(--border);padding:0.35rem 0.55rem;background:var(--input-bg);color:var(--text-primary)">'+esc(u.ackNote||'')+'</textarea><button class="btn btn-sm" onclick="saveAckNote(\''+u.id+'\')" style="font-size:0.72rem;padding:0.28rem 0.65rem;white-space:nowrap">Save</button></div>';
     if (!u.ack) {
-      ackBar = '<div class="upd-ack-bar"><span style="font-size:0.68rem;font-weight:700;color:var(--warning);width:100%">Action required — please respond below</span><button class="upd-ack-btn understood" onclick="ackUpdate(\''+u.id+'\',\'understood\')">✅ I Understand</button><button class="upd-ack-btn acknowledged" onclick="ackUpdate(\''+u.id+'\',\'acknowledged\')">✓ Acknowledged</button><button class="upd-ack-btn confused" onclick="ackUpdate(\''+u.id+'\',\'confused\')">❓ Confusing</button>'+noteArea+'</div>';
+      ackBar = '<div class="upd-ack-bar"><span style="font-size:0.68rem;font-weight:700;color:var(--warning);width:100%">Action required — please respond below</span><button class="upd-ack-btn understood" onclick="ackUpdate(\''+u.id+'\',\'understood\')">✅ Understood</button><button class="upd-ack-btn confused" onclick="ackUpdate(\''+u.id+'\',\'needclarification\')">❓ Need Clarification</button>'+noteArea+'</div>';
     } else {
-      const ackLabel = u.ack==='understood'?'✅ I Understand':u.ack==='acknowledged'?'✓ Acknowledged':'❓ Confusing';
+      const ackLabel = u.ack==='understood'?'✅ Understood':'❓ Need Clarification';
       ackBar = '<div class="upd-ack-bar"><span class="upd-ack-status '+u.ack+'">'+ackLabel+'</span>'+noteArea+'</div>';
     }
   }
@@ -2189,12 +2183,12 @@ function postUpdate() {
   const now = new Date();
   const date = now.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
   const updates = getUpdates().filter(u=>!SEED_UPDATES.find(s=>s.id===u.id));
-  updates.unshift({ id: 'upd-'+Date.now(), date, type, priority, msg });
+  updates.unshift({ id: 'upd-'+Date.now(), date, type, priority, msg, notified: true });
   setUpdates(updates);
   document.getElementById('update-msg').value = '';
   document.getElementById('update-priority').value = 'Medium';
   renderUpdates();
-  toast('Update posted.');
+  toast('Update posted & sent to Athan.');
 }
 
 function notifyUpdate(id) {
