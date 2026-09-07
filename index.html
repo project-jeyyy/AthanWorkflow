@@ -3618,14 +3618,13 @@ function subscribeChatLogs() {
   }, function(){});
 }
 
-function _saveChatLogs() {
-  db.collection('app').doc('chatlogs').set({ messages: _chatLogs }).catch(function(){});
-}
-
 function _addChatMsg(role, text, from) {
   var msg = { role: role, text: text, from: from || currentUser || 'unknown', ts: new Date().toISOString() };
   _chatLogs.push(msg);
-  _saveChatLogs();
+  db.collection('app').doc('chatlogs').set(
+    { messages: firebase.firestore.FieldValue.arrayUnion(msg) },
+    { merge: true }
+  ).catch(function(e){ console.error('chat save error', e); });
 }
 
 function _refreshChatLogsBadge() {
@@ -3646,8 +3645,8 @@ function _refreshChatLogsBadge() {
 function renderChatLogs() {
   var el = document.getElementById('chatlogs-content');
   if (!el) return;
-  if (_chatLogs.length === 0) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128172;</div><div class="empty-state-text">No chat messages yet.</div></div>';
+  if (!_chatLogs || _chatLogs.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128172;</div><div class="empty-state-text">No chat messages yet. Messages will appear here when someone uses Ask Ace.</div></div>';
     return;
   }
 
