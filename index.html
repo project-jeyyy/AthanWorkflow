@@ -3621,10 +3621,13 @@ function subscribeChatLogs() {
 function _addChatMsg(role, text, from) {
   var msg = { role: role, text: text, from: from || currentUser || 'unknown', ts: new Date().toISOString() };
   _chatLogs.push(msg);
-  db.collection('app').doc('chatlogs').set(
-    { messages: firebase.firestore.FieldValue.arrayUnion(msg) },
-    { merge: true }
-  ).catch(function(e){ console.error('chat save error', e); });
+  var toSave = _chatLogs.slice();
+  db.collection('app').doc('chatlogs').set({ messages: toSave }).then(function() {
+    console.log('Chat saved OK, total messages:', toSave.length);
+  }).catch(function(e) {
+    console.error('Chat save FAILED:', e);
+    toast('Chat save error — check console');
+  });
 }
 
 function _refreshChatLogsBadge() {
