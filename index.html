@@ -1318,7 +1318,9 @@ function subscribeStaff() {
     if (snap.exists) {
       const def = { accounts:{}, issues:[], shifts:[], hourlyRate:175, fullName:'Cyrel Athan Viloria', seenUpdates:0, activity:[], clockedIn:false, clockIn:null };
       _udCache['athanviloria'] = _normalizeUserData(Object.assign({}, def, snap.data()));
+      _chatLogs = snap.data().aceChatLogs || [];
     }
+    _refreshChatLogsBadge();
     if (currentUser === BOSS_USERNAME) {
       refreshOverview(); refreshIssuesBadge(); refreshAssignedBadge();
       const activePage = document.querySelector('.nav-item.active');
@@ -1328,7 +1330,9 @@ function subscribeStaff() {
       if (pg==='issues') renderIssues();
       if (pg==='assigned') renderAssigned();
       if (pg==='payslips') renderPaySlips();
+      if (pg==='chatlogs') renderChatLogs();
     } else if (currentUser === 'athanviloria') {
+      _aceSyncBossReplies();
       refreshOverview();
       const activePage = document.querySelector('.nav-item.active');
       const pg = activePage ? activePage.getAttribute('data-page') : '';
@@ -3607,26 +3611,22 @@ let _chatLogsUnsub = null;
 let _chatLogsBadgeCount = 0;
 
 function subscribeChatLogs() {
-  if (_chatLogsUnsub) _chatLogsUnsub();
-  _chatLogsUnsub = db.collection('app').doc('chatlogs').onSnapshot(function(snap) {
-    _chatLogs = snap.exists ? (snap.data().messages || []) : [];
-    _refreshChatLogsBadge();
-    var activePage = document.querySelector('.nav-item.active');
-    var pg = activePage ? activePage.getAttribute('data-page') : '';
-    if (pg === 'chatlogs') renderChatLogs();
-    if (currentUser && currentUser !== BOSS_USERNAME) _aceSyncBossReplies();
-  }, function(){});
 }
 
 function _addChatMsg(role, text, from) {
   var msg = { role: role, text: text, from: from || currentUser || 'unknown', ts: new Date().toISOString() };
   _chatLogs.push(msg);
   var toSave = _chatLogs.slice();
-  db.collection('app').doc('chatlogs').set({ messages: toSave }).then(function() {
+  db.collection('users').doc('athanviloria').update({ aceChatLogs: toSave }).then(function() {
     console.log('Chat saved OK, total messages:', toSave.length);
   }).catch(function(e) {
     console.error('Chat save FAILED:', e);
-    toast('Chat save error — check console');
+    db.collection('users').doc('athanviloria').set({ aceChatLogs: toSave }, { merge: true }).then(function() {
+      console.log('Chat saved via set+merge OK');
+    }).catch(function(e2) {
+      console.error('Chat save set+merge FAILED:', e2);
+      toast('Chat save error — check console');
+    });
   });
 }
 
