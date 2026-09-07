@@ -519,13 +519,9 @@ select {
   .ace-chat-panel { bottom:80px; right:1rem; left:1rem; width:auto; max-width:none; }
 }
 
-.ace-fab { position:fixed; bottom:1.5rem; right:1.5rem; width:54px; height:54px; border-radius:50%; border:2px solid var(--copper); cursor:pointer; z-index:9998; display:flex; align-items:center; justify-content:center; color:#fff; background:var(--navy-mid); box-shadow:0 4px 16px rgba(196,149,106,0.25), 0 0 0 0 rgba(196,149,106,0); transition:all 0.25s; }
+.ace-fab { position:fixed; bottom:1.5rem; right:1.5rem; width:54px; height:54px; border-radius:50%; border:2px solid var(--copper); cursor:pointer; z-index:9998; display:flex; align-items:center; justify-content:center; color:#fff; background:var(--navy-mid); box-shadow:0 4px 16px rgba(196,149,106,0.25); transition:all 0.25s; }
 .ace-fab:hover { transform:scale(1.08); box-shadow:0 6px 24px rgba(196,149,106,0.35); }
-.ace-fab.open { border-color:var(--danger); background:var(--navy); }
 .ace-fab svg { width:26px; height:26px; }
-.ace-fab.open svg { display:none; }
-.ace-fab .ace-fab-x { display:none; font-size:1.5rem; font-weight:300; line-height:1; }
-.ace-fab.open .ace-fab-x { display:block; color:var(--danger); }
 
 .ace-chat-panel { position:fixed; bottom:90px; right:1.5rem; width:380px; max-height:520px; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); z-index:9997; display:flex; flex-direction:column; overflow:hidden; animation:aceSlideUp 0.25s ease-out; }
 @keyframes aceSlideUp { from { opacity:0; transform:translateY(16px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
@@ -3578,7 +3574,7 @@ function _aceCreateUI() {
   const fab = document.createElement('button');
   fab.className = 'ace-fab';
   fab.id = 'ace-fab';
-  fab.innerHTML = aceSvg + '<span class="ace-fab-x">&times;</span>';
+  fab.innerHTML = aceSvg;
   fab.title = 'Ask Ace';
   fab.onclick = _aceToggle;
   document.body.appendChild(fab);
@@ -3608,7 +3604,7 @@ function _aceToggle() {
   const panel = document.getElementById('ace-panel');
   const fab = document.getElementById('ace-fab');
   panel.hidden = !_aceChatOpen;
-  fab.classList.toggle('open', _aceChatOpen);
+  fab.hidden = _aceChatOpen;
   if (_aceChatOpen) {
     setTimeout(() => document.getElementById('ace-input').focus(), 100);
     const msgs = document.getElementById('ace-messages');
