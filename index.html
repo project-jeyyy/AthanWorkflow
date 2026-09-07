@@ -516,7 +516,39 @@ select {
   .hamburger { display:flex; }
   .page-content { padding:1.25rem 1rem; }
   .topbar { padding:0 1rem; }
+  .ace-chat-panel { bottom:80px; right:1rem; left:1rem; width:auto; max-width:none; }
 }
+
+.ace-fab { position:fixed; bottom:1.5rem; right:1.5rem; width:52px; height:52px; border-radius:50%; border:none; cursor:pointer; z-index:9998; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:800; color:#fff; background:linear-gradient(135deg,#6366F1,#8B5CF6); box-shadow:0 4px 14px rgba(99,102,241,0.4); transition:all 0.2s; }
+.ace-fab:hover { transform:scale(1.08); box-shadow:0 6px 20px rgba(99,102,241,0.5); }
+.ace-fab.open { background:linear-gradient(135deg,#EF4444,#DC2626); box-shadow:0 4px 14px rgba(239,68,68,0.4); }
+
+.ace-chat-panel { position:fixed; bottom:90px; right:1.5rem; width:380px; max-height:520px; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius); box-shadow:0 12px 40px rgba(0,0,0,0.15); z-index:9997; display:flex; flex-direction:column; overflow:hidden; animation:aceSlideUp 0.2s ease-out; }
+@keyframes aceSlideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.ace-chat-header { padding:0.75rem 1rem; background:linear-gradient(135deg,#6366F1,#8B5CF6); color:#fff; display:flex; align-items:center; gap:0.6rem; flex-shrink:0; }
+.ace-chat-header .ace-avatar { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:0.85rem; font-weight:800; }
+.ace-chat-header .ace-title { flex:1; font-weight:700; font-size:0.88rem; }
+.ace-chat-header .ace-subtitle { font-size:0.65rem; opacity:0.8; font-weight:500; }
+.ace-chat-header .ace-close-btn { background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer; padding:0 0.2rem; opacity:0.8; }
+.ace-chat-header .ace-close-btn:hover { opacity:1; }
+
+.ace-messages { flex:1; overflow-y:auto; padding:0.85rem; display:flex; flex-direction:column; gap:0.6rem; min-height:200px; max-height:360px; }
+.ace-msg { max-width:85%; padding:0.55rem 0.8rem; border-radius:12px; font-size:0.82rem; line-height:1.5; word-wrap:break-word; white-space:pre-wrap; }
+.ace-msg.user { align-self:flex-end; background:linear-gradient(135deg,#6366F1,#8B5CF6); color:#fff; border-bottom-right-radius:4px; }
+.ace-msg.assistant { align-self:flex-start; background:var(--surface); color:var(--text-primary); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.ace-msg.system { align-self:center; font-size:0.72rem; color:var(--text-muted); font-style:italic; background:none; padding:0.3rem; }
+.ace-typing { align-self:flex-start; padding:0.55rem 0.8rem; background:var(--surface); border:1px solid var(--border); border-radius:12px; border-bottom-left-radius:4px; font-size:0.82rem; color:var(--text-muted); }
+.ace-typing span { animation:aceBlink 1.4s infinite; }
+.ace-typing span:nth-child(2) { animation-delay:0.2s; }
+.ace-typing span:nth-child(3) { animation-delay:0.4s; }
+@keyframes aceBlink { 0%,60%,100%{opacity:0.3} 30%{opacity:1} }
+
+.ace-input-row { display:flex; gap:0.5rem; padding:0.65rem 0.85rem; border-top:1px solid var(--border); flex-shrink:0; background:var(--card-bg); }
+.ace-input-row input { flex:1; border:1px solid var(--border); border-radius:var(--radius-sm); padding:0.5rem 0.75rem; font-size:0.82rem; background:var(--surface); color:var(--text-primary); outline:none; }
+.ace-input-row input:focus { border-color:#6366F1; }
+.ace-input-row button { padding:0.5rem 0.85rem; border-radius:var(--radius-sm); border:none; background:linear-gradient(135deg,#6366F1,#8B5CF6); color:#fff; font-weight:700; font-size:0.78rem; cursor:pointer; transition:opacity 0.15s; }
+.ace-input-row button:hover { opacity:0.9; }
+.ace-input-row button:disabled { opacity:0.5; cursor:not-allowed; }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -3521,6 +3553,132 @@ function toast(msg) {
 function esc(s) {
   if (s==null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// =============================================
+// ASK ACE CHAT
+// =============================================
+const ACE_WORKER_URL = '%%ACE_WORKER_URL%%';
+let _aceChatOpen = false;
+let _aceMessages = [];
+let _aceSending = false;
+
+function _aceCreateUI() {
+  const fab = document.createElement('button');
+  fab.className = 'ace-fab';
+  fab.id = 'ace-fab';
+  fab.innerHTML = 'Ace';
+  fab.title = 'Ask Ace';
+  fab.onclick = _aceToggle;
+  document.body.appendChild(fab);
+
+  const panel = document.createElement('div');
+  panel.className = 'ace-chat-panel';
+  panel.id = 'ace-panel';
+  panel.hidden = true;
+  panel.innerHTML =
+    '<div class="ace-chat-header">' +
+      '<div class="ace-avatar">Ace</div>' +
+      '<div style="flex:1"><div class="ace-title">Ask Ace</div><div class="ace-subtitle">AI Work Assistant</div></div>' +
+      '<button class="ace-close-btn" onclick="_aceToggle()">&times;</button>' +
+    '</div>' +
+    '<div class="ace-messages" id="ace-messages"></div>' +
+    '<div class="ace-input-row">' +
+      '<input type="text" id="ace-input" placeholder="Ask Ace anything..." onkeydown="if(event.key===\'Enter\')_aceSend()">' +
+      '<button id="ace-send-btn" onclick="_aceSend()">Send</button>' +
+    '</div>';
+  document.body.appendChild(panel);
+
+  _aceAddMsg('system', 'Hi! I\'m Ace, your AI work assistant. Ask me anything about the portal, clients, bookkeeping, or workflow.');
+}
+
+function _aceToggle() {
+  _aceChatOpen = !_aceChatOpen;
+  const panel = document.getElementById('ace-panel');
+  const fab = document.getElementById('ace-fab');
+  panel.hidden = !_aceChatOpen;
+  fab.classList.toggle('open', _aceChatOpen);
+  fab.innerHTML = _aceChatOpen ? '&times;' : 'Ace';
+  if (_aceChatOpen) {
+    setTimeout(() => document.getElementById('ace-input').focus(), 100);
+    const msgs = document.getElementById('ace-messages');
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+function _aceAddMsg(role, text) {
+  const container = document.getElementById('ace-messages');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = 'ace-msg ' + role;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function _aceShowTyping() {
+  const container = document.getElementById('ace-messages');
+  const div = document.createElement('div');
+  div.className = 'ace-typing';
+  div.id = 'ace-typing';
+  div.innerHTML = '<span>.</span><span>.</span><span>.</span>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function _aceRemoveTyping() {
+  const el = document.getElementById('ace-typing');
+  if (el) el.remove();
+}
+
+async function _aceSend() {
+  if (_aceSending) return;
+  const input = document.getElementById('ace-input');
+  const text = (input.value || '').trim();
+  if (!text) return;
+
+  if (ACE_WORKER_URL === '%%ACE_WORKER_URL%%') {
+    _aceAddMsg('system', 'Ace is not configured yet. Please deploy the Cloudflare Worker and update ACE_WORKER_URL.');
+    return;
+  }
+
+  input.value = '';
+  _aceAddMsg('user', text);
+  _aceMessages.push({ role: 'user', content: text });
+
+  _aceSending = true;
+  document.getElementById('ace-send-btn').disabled = true;
+  _aceShowTyping();
+
+  try {
+    const resp = await fetch(ACE_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: _aceMessages }),
+    });
+    const data = await resp.json();
+    _aceRemoveTyping();
+
+    if (data.reply) {
+      _aceMessages.push({ role: 'assistant', content: data.reply });
+      _aceAddMsg('assistant', data.reply);
+    } else {
+      _aceAddMsg('system', 'Something went wrong. Please try again.');
+    }
+  } catch (e) {
+    _aceRemoveTyping();
+    _aceAddMsg('system', 'Could not reach Ace. Check your connection.');
+  }
+
+  _aceSending = false;
+  document.getElementById('ace-send-btn').disabled = false;
+  input.focus();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _aceCreateUI);
+} else {
+  _aceCreateUI();
 }
 </script>
 </body>
