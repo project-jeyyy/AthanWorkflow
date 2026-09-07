@@ -3663,11 +3663,11 @@ async function _aceSend() {
       _aceMessages.push({ role: 'assistant', content: data.reply });
       _aceAddMsg('assistant', data.reply);
     } else {
-      _aceAddMsg('system', 'Something went wrong. Please try again.');
+      _aceAddMsg('system', 'Error: ' + (data.error || 'Unknown') + (data.detail ? ' — ' + data.detail.substring(0,200) : ''));
     }
   } catch (e) {
     _aceRemoveTyping();
-    _aceAddMsg('system', 'Could not reach Ace. Check your connection.');
+    _aceAddMsg('system', 'Could not reach Ace: ' + e.message);
   }
 
   _aceSending = false;
