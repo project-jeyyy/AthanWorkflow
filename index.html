@@ -556,6 +556,27 @@ select {
 .ace-input-row button { padding:0.5rem 1rem; border-radius:var(--radius-sm); border:none; background:var(--navy-mid); color:var(--copper); font-weight:700; font-size:0.78rem; cursor:pointer; transition:all 0.15s; letter-spacing:0.02em; }
 .ace-input-row button:hover { background:var(--navy); color:var(--copper); }
 .ace-input-row button:disabled { opacity:0.4; cursor:not-allowed; }
+
+.ace-msg.boss { align-self:flex-start; background:linear-gradient(135deg, rgba(196,149,106,0.15), rgba(196,149,106,0.08)); color:var(--text-primary); border:1px solid var(--copper); border-bottom-left-radius:4px; }
+.ace-msg.boss::before { content:'Jey'; display:inline-block; font-size:0.6rem; font-weight:700; color:var(--copper); background:rgba(196,149,106,0.15); padding:0.1rem 0.4rem; border-radius:99px; margin-right:0.4rem; vertical-align:middle; letter-spacing:0.03em; }
+
+.cl-thread { background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); margin-bottom:1rem; overflow:hidden; }
+.cl-thread-header { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; background:var(--surface); border-bottom:1px solid var(--border); cursor:pointer; }
+.cl-thread-user { font-weight:700; font-size:0.82rem; color:var(--text-primary); }
+.cl-thread-time { font-size:0.7rem; color:var(--text-muted); }
+.cl-thread-count { font-size:0.68rem; color:var(--copper); font-weight:600; }
+.cl-thread-msgs { padding:0.75rem 1rem; display:flex; flex-direction:column; gap:0.5rem; max-height:400px; overflow-y:auto; }
+.cl-msg { padding:0.5rem 0.75rem; border-radius:var(--radius-sm); font-size:0.8rem; line-height:1.5; max-width:85%; word-wrap:break-word; white-space:pre-wrap; }
+.cl-msg.user { align-self:flex-end; background:var(--navy-mid); color:#E8EDF5; }
+.cl-msg.assistant { align-self:flex-start; background:var(--surface); color:var(--text-primary); border:1px solid var(--border); }
+.cl-msg.boss { align-self:flex-start; background:linear-gradient(135deg, rgba(196,149,106,0.15), rgba(196,149,106,0.08)); border:1px solid var(--copper); color:var(--text-primary); }
+.cl-msg .cl-msg-meta { font-size:0.62rem; color:var(--text-muted); margin-top:0.2rem; }
+.cl-msg.boss .cl-msg-meta { color:var(--copper); }
+.cl-reply-row { display:flex; gap:0.5rem; padding:0.6rem 1rem; border-top:1px solid var(--border); background:var(--card-bg); }
+.cl-reply-row input { flex:1; border:1px solid var(--input-border); border-radius:var(--radius-sm); padding:0.45rem 0.7rem; font-size:0.8rem; font-family:var(--font); background:var(--input-bg); color:var(--text-primary); outline:none; }
+.cl-reply-row input:focus { border-color:var(--copper); box-shadow:0 0 0 2px var(--copper-glow); }
+.cl-reply-row button { padding:0.45rem 0.9rem; border-radius:var(--radius-sm); border:none; background:var(--copper); color:#fff; font-weight:700; font-size:0.76rem; cursor:pointer; transition:all 0.15s; }
+.cl-reply-row button:hover { filter:brightness(1.1); }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -650,6 +671,7 @@ select {
       <div class="nav-item" id="nav-tasklog" data-page="tasklog" onclick="navigate('tasklog')" style="display:none"><span class="nav-icon">&#10003;</span> Task Log</div>
       <div class="nav-item" id="nav-staff" data-page="staff" onclick="navigate('staff')" style="display:none"><span class="nav-icon">&#9679;</span> Staff View</div>
       <div class="nav-item" id="nav-reports" data-page="reports" onclick="navigate('reports')" style="display:none"><span class="nav-icon">&#128203;</span> Reports <span class="nav-badge hidden" id="reports-badge"></span></div>
+      <div class="nav-item" id="nav-chatlogs" data-page="chatlogs" onclick="navigate('chatlogs')" style="display:none"><span class="nav-icon">&#128172;</span> Chat Logs <span class="nav-badge hidden" id="chatlogs-badge"></span></div>
       <div class="nav-item" id="nav-dailyreport" data-page="dailyreport" onclick="navigate('dailyreport')" style="display:none"><span class="nav-icon">&#128221;</span> Daily Report <span class="nav-badge hidden" id="dailyreport-badge"></span></div>
       <div class="nav-section-label">Communication</div>
       <div class="nav-item" data-page="updates" onclick="navigate('updates')"><span class="nav-icon">&#9650;</span> Updates <span class="nav-badge hidden" id="updates-badge"></span></div>
@@ -931,6 +953,17 @@ select {
         </div>
         <div id="reports-content">
           <div class="empty-state"><div class="empty-state-icon">&#128203;</div><div class="empty-state-text">Loading...</div></div>
+        </div>
+      </section>
+
+      <!-- Chat Logs -->
+      <section id="page-chatlogs" class="page-section">
+        <div class="section-header">
+          <div class="section-title">Chat Logs</div>
+          <div class="section-desc">View and reply to Ace chat conversations.</div>
+        </div>
+        <div id="chatlogs-content">
+          <div class="empty-state"><div class="empty-state-icon">&#128172;</div><div class="empty-state-text">No chat messages yet.</div></div>
         </div>
       </section>
 
@@ -1731,6 +1764,7 @@ function enterApp() {
   if (_nav('nav-shifts'))    _nav('nav-shifts').style.display    = isBoss ? 'none' : 'flex';
   if (_nav('nav-payslips'))  _nav('nav-payslips').style.display  = 'flex';
   if (_nav('nav-reports'))   _nav('nav-reports').style.display   = isBoss ? 'flex' : 'none';
+  if (_nav('nav-chatlogs'))  _nav('nav-chatlogs').style.display  = isBoss ? 'flex' : 'none';
   if (_nav('nav-dailyreport')) _nav('nav-dailyreport').style.display = isBoss ? 'none' : 'flex';
   const navRecords = document.getElementById('nav-section-records');
   if (navRecords) navRecords.style.display = isBoss ? 'none' : '';
@@ -1750,6 +1784,7 @@ function enterApp() {
   refreshClockUI();
   try { refreshAll(); } catch(e) { console.error('refreshAll error:', e); }
   subscribeUpdates();
+  subscribeChatLogs();
   if (isBoss) subscribeStaff(); else { subscribeStaff(); subscribeBoss(); }
   startPresence();
   startInactivityTracking();
@@ -1781,12 +1816,13 @@ function greetUser() {
 // =============================================
 // NAVIGATION
 // =============================================
-const PAGE_TITLES = { overview:'Dashboard', updates:'Updates', accounts:'Clients', tasklog:'Task Log', staff:'Staff View', assigned:'My Tasks', issues:'Issues & Questions', earnings:'Earnings', shifts:'Shift Log', payslips:'Pay Slips', attendance:'Attendance', profile:'Settings', dailyreport:'Daily Report', reports:'Reports' };
+const PAGE_TITLES = { overview:'Dashboard', updates:'Updates', accounts:'Clients', tasklog:'Task Log', staff:'Staff View', assigned:'My Tasks', issues:'Issues & Questions', earnings:'Earnings', shifts:'Shift Log', payslips:'Pay Slips', attendance:'Attendance', profile:'Settings', dailyreport:'Daily Report', reports:'Reports', chatlogs:'Chat Logs' };
 
 function navigate(page) {
   if ((page === 'earnings' || page === 'shifts' || page === 'tasklog' || page === 'dailyreport') && currentUser === BOSS_USERNAME) page = 'overview';
   if (page === 'payslips' && currentUser !== BOSS_USERNAME && currentUser !== 'athanviloria') page = 'overview';
   if (page === 'reports' && currentUser !== BOSS_USERNAME) page = 'overview';
+  if (page === 'chatlogs' && currentUser !== BOSS_USERNAME) page = 'overview';
   document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const sec = document.getElementById('page-'+page);
@@ -1807,6 +1843,7 @@ function navigate(page) {
   if (page==='payslips') renderPaySlips();
   if (page==='dailyreport') renderDailyReport();
   if (page==='reports')  renderReports();
+  if (page==='chatlogs') renderChatLogs();
   if (page==='profile')  populateSidebar();
   closeSidebar();
 }
@@ -3563,12 +3600,123 @@ function esc(s) {
 }
 
 // =============================================
+// CHAT LOGS (Firestore-backed)
+// =============================================
+let _chatLogs = [];
+let _chatLogsUnsub = null;
+let _chatLogsBadgeCount = 0;
+
+function subscribeChatLogs() {
+  if (_chatLogsUnsub) _chatLogsUnsub();
+  _chatLogsUnsub = db.collection('app').doc('chatlogs').onSnapshot(function(snap) {
+    _chatLogs = snap.exists ? (snap.data().messages || []) : [];
+    _refreshChatLogsBadge();
+    var activePage = document.querySelector('.nav-item.active');
+    var pg = activePage ? activePage.getAttribute('data-page') : '';
+    if (pg === 'chatlogs') renderChatLogs();
+    if (currentUser && currentUser !== BOSS_USERNAME) _aceSyncBossReplies();
+  }, function(){});
+}
+
+function _saveChatLogs() {
+  db.collection('app').doc('chatlogs').set({ messages: _chatLogs }).catch(function(){});
+}
+
+function _addChatMsg(role, text, from) {
+  var msg = { role: role, text: text, from: from || currentUser || 'unknown', ts: new Date().toISOString() };
+  _chatLogs.push(msg);
+  _saveChatLogs();
+}
+
+function _refreshChatLogsBadge() {
+  var badge = document.getElementById('chatlogs-badge');
+  if (!badge) return;
+  var unread = 0;
+  var lastBossReply = '';
+  for (var i = _chatLogs.length - 1; i >= 0; i--) {
+    if (_chatLogs[i].from === BOSS_USERNAME) { lastBossReply = _chatLogs[i].ts; break; }
+  }
+  for (var j = 0; j < _chatLogs.length; j++) {
+    if (_chatLogs[j].from !== BOSS_USERNAME && _chatLogs[j].ts > lastBossReply) unread++;
+  }
+  if (unread > 0) { badge.textContent = unread; badge.classList.remove('hidden'); }
+  else badge.classList.add('hidden');
+}
+
+function renderChatLogs() {
+  var el = document.getElementById('chatlogs-content');
+  if (!el) return;
+  if (_chatLogs.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#128172;</div><div class="empty-state-text">No chat messages yet.</div></div>';
+    return;
+  }
+
+  var sessions = [];
+  var cur = null;
+  for (var i = 0; i < _chatLogs.length; i++) {
+    var m = _chatLogs[i];
+    var mDate = m.ts ? m.ts.substring(0,10) : '';
+    if (!cur || cur.date !== mDate) {
+      cur = { date: mDate, messages: [] };
+      sessions.push(cur);
+    }
+    cur.messages.push(m);
+  }
+
+  var html = '';
+  for (var s = sessions.length - 1; s >= 0; s--) {
+    var sess = sessions[s];
+    var msgCount = sess.messages.length;
+    var staffMsgs = sess.messages.filter(function(m){return m.from !== BOSS_USERNAME;}).length;
+    html += '<div class="cl-thread">';
+    html += '<div class="cl-thread-header" onclick="this.parentElement.querySelector(\'.cl-thread-body\').hidden=!this.parentElement.querySelector(\'.cl-thread-body\').hidden">';
+    html += '<div><span class="cl-thread-user">Cyrel Athan Viloria</span> <span class="cl-thread-count">(' + msgCount + ' messages)</span></div>';
+    html += '<div class="cl-thread-time">' + _formatCLDate(sess.date) + '</div>';
+    html += '</div>';
+    html += '<div class="cl-thread-body">';
+    html += '<div class="cl-thread-msgs">';
+    for (var k = 0; k < sess.messages.length; k++) {
+      var msg = sess.messages[k];
+      var cls = msg.from === BOSS_USERNAME ? 'boss' : (msg.role === 'assistant' ? 'assistant' : 'user');
+      var label = msg.from === BOSS_USERNAME ? 'Jey' : (msg.role === 'assistant' ? 'Ace' : 'Cyrel');
+      var time = msg.ts ? new Date(msg.ts).toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'}) : '';
+      html += '<div class="cl-msg ' + cls + '">' + esc(msg.text) + '<div class="cl-msg-meta">' + label + ' &middot; ' + time + '</div></div>';
+    }
+    html += '</div>';
+    html += '<div class="cl-reply-row">';
+    html += '<input type="text" id="cl-reply-' + s + '" placeholder="Reply as Jey..." onkeydown="if(event.key===\'Enter\')_clSendReply(' + s + ',\'' + esc(sess.date) + '\')">';
+    html += '<button onclick="_clSendReply(' + s + ',\'' + esc(sess.date) + '\')">Reply</button>';
+    html += '</div>';
+    html += '</div></div>';
+  }
+  el.innerHTML = html;
+}
+
+function _formatCLDate(d) {
+  if (!d) return '';
+  try {
+    var dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('en-PH', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+  } catch(e) { return d; }
+}
+
+function _clSendReply(sessionIdx, date) {
+  var input = document.getElementById('cl-reply-' + sessionIdx);
+  if (!input) return;
+  var text = (input.value || '').trim();
+  if (!text) return;
+  input.value = '';
+  _addChatMsg('boss', text, BOSS_USERNAME);
+}
+
+// =============================================
 // ASK ACE CHAT
 // =============================================
 const ACE_WORKER_URL = 'https://ace-assistant.project-jeyyy.workers.dev';
 let _aceChatOpen = false;
 let _aceMessages = [];
 let _aceSending = false;
+let _aceLastSyncIdx = 0;
 
 function _aceCreateUI() {
   const aceSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" fill="rgba(196,149,106,0.2)" stroke="#C4956A"/></svg>';
@@ -3607,6 +3755,20 @@ function _aceCreateUI() {
   document.addEventListener('click', function() { _aceClose(); });
 
   _aceAddMsg('system', 'Hi! I\'m Ace, your AI work assistant. Ask me anything about the portal, clients, bookkeeping, or workflow.');
+
+  _aceLastSyncIdx = _chatLogs.length;
+}
+
+function _aceSyncBossReplies() {
+  var container = document.getElementById('ace-messages');
+  if (!container) return;
+  for (var i = _aceLastSyncIdx; i < _chatLogs.length; i++) {
+    var m = _chatLogs[i];
+    if (m.from === BOSS_USERNAME) {
+      _aceAddMsg('boss', m.text);
+    }
+  }
+  _aceLastSyncIdx = _chatLogs.length;
 }
 
 function _aceOpen() {
@@ -3668,6 +3830,8 @@ async function _aceSend() {
   input.value = '';
   _aceAddMsg('user', text);
   _aceMessages.push({ role: 'user', content: text });
+  _addChatMsg('user', text, currentUser);
+  _aceLastSyncIdx = _chatLogs.length;
 
   _aceSending = true;
   document.getElementById('ace-send-btn').disabled = true;
@@ -3675,8 +3839,11 @@ async function _aceSend() {
 
   await new Promise(function(r) { setTimeout(r, 800); });
   _aceRemoveTyping();
-  _aceAddMsg('assistant', 'I will be available soon. Stay tuned!');
-  _aceMessages.push({ role: 'assistant', content: 'I will be available soon. Stay tuned!' });
+  var replyText = 'I will be available soon. Stay tuned!';
+  _aceAddMsg('assistant', replyText);
+  _aceMessages.push({ role: 'assistant', content: replyText });
+  _addChatMsg('assistant', replyText, 'ace');
+  _aceLastSyncIdx = _chatLogs.length;
 
   _aceSending = false;
   document.getElementById('ace-send-btn').disabled = false;
