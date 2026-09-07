@@ -3665,11 +3665,6 @@ async function _aceSend() {
   const text = (input.value || '').trim();
   if (!text) return;
 
-  if (ACE_WORKER_URL === '%%ACE_WORKER_URL%%') {
-    _aceAddMsg('system', 'Ace is not configured yet. Please deploy the Cloudflare Worker and update ACE_WORKER_URL.');
-    return;
-  }
-
   input.value = '';
   _aceAddMsg('user', text);
   _aceMessages.push({ role: 'user', content: text });
@@ -3678,25 +3673,10 @@ async function _aceSend() {
   document.getElementById('ace-send-btn').disabled = true;
   _aceShowTyping();
 
-  try {
-    const resp = await fetch(ACE_WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: _aceMessages }),
-    });
-    const data = await resp.json();
-    _aceRemoveTyping();
-
-    if (data.reply) {
-      _aceMessages.push({ role: 'assistant', content: data.reply });
-      _aceAddMsg('assistant', data.reply);
-    } else {
-      _aceAddMsg('system', 'Error: ' + (data.error || 'Unknown') + (data.detail ? ' — ' + data.detail.substring(0,200) : ''));
-    }
-  } catch (e) {
-    _aceRemoveTyping();
-    _aceAddMsg('system', 'Could not reach Ace: ' + e.message);
-  }
+  await new Promise(function(r) { setTimeout(r, 800); });
+  _aceRemoveTyping();
+  _aceAddMsg('assistant', 'I will be available soon. Stay tuned!');
+  _aceMessages.push({ role: 'assistant', content: 'I will be available soon. Stay tuned!' });
 
   _aceSending = false;
   document.getElementById('ace-send-btn').disabled = false;
