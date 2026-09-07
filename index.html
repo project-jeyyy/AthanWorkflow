@@ -532,8 +532,8 @@ select {
 .ace-chat-header .ace-hdr-text { flex:1; }
 .ace-chat-header .ace-title { font-weight:700; font-size:0.9rem; color:#fff; }
 .ace-chat-header .ace-subtitle { font-size:0.65rem; color:var(--copper); font-weight:600; letter-spacing:0.03em; margin-top:1px; }
-.ace-chat-header .ace-close-btn { background:none; border:none; color:rgba(255,255,255,0.5); font-size:1.3rem; cursor:pointer; padding:0.2rem; border-radius:6px; transition:all 0.15s; line-height:1; }
-.ace-chat-header .ace-close-btn:hover { color:#fff; background:rgba(255,255,255,0.1); }
+.ace-chat-header .ace-close-btn { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:1.4rem; cursor:pointer; padding:0.25rem 0.55rem; border-radius:6px; transition:all 0.15s; line-height:1; flex-shrink:0; }
+.ace-chat-header .ace-close-btn:hover { color:#fff; background:rgba(255,255,255,0.25); border-color:rgba(255,255,255,0.4); }
 
 .ace-messages { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.65rem; min-height:220px; max-height:360px; }
 .ace-msg { max-width:82%; padding:0.6rem 0.9rem; border-radius:var(--radius-md); font-size:0.82rem; line-height:1.55; word-wrap:break-word; white-space:pre-wrap; }
@@ -3587,7 +3587,7 @@ function _aceCreateUI() {
     '<div class="ace-chat-header">' +
       '<div class="ace-avatar">' + aceSvg.replace('width="1.8"','width="1.5"') + '</div>' +
       '<div class="ace-hdr-text"><div class="ace-title">Ask Ace</div><div class="ace-subtitle">AI Work Assistant</div></div>' +
-      '<button class="ace-close-btn" onclick="_aceToggle()">&times;</button>' +
+      '<button class="ace-close-btn" id="ace-close-btn" title="Close">&times;</button>' +
     '</div>' +
     '<div class="ace-messages" id="ace-messages"></div>' +
     '<div class="ace-input-row">' +
@@ -3595,6 +3595,11 @@ function _aceCreateUI() {
       '<button id="ace-send-btn" onclick="_aceSend()">Send</button>' +
     '</div>';
   document.body.appendChild(panel);
+
+  document.getElementById('ace-close-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    _aceToggle();
+  });
 
   _aceAddMsg('system', 'Hi! I\'m Ace, your AI work assistant. Ask me anything about the portal, clients, bookkeeping, or workflow.');
 }
