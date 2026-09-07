@@ -523,7 +523,9 @@ select {
 .ace-fab:hover { transform:scale(1.08); box-shadow:0 6px 24px rgba(196,149,106,0.35); }
 .ace-fab svg { width:26px; height:26px; }
 
-.ace-chat-panel { position:fixed; bottom:90px; right:1.5rem; width:380px; max-height:520px; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); z-index:9997; display:flex; flex-direction:column; overflow:hidden; animation:aceSlideUp 0.25s ease-out; }
+.ace-chat-panel { position:fixed; bottom:90px; right:1.5rem; width:380px; max-height:520px; background:var(--card-bg); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); z-index:9997; display:none; flex-direction:column; overflow:hidden; }
+.ace-chat-panel.ace-open { display:flex; animation:aceSlideUp 0.25s ease-out; }
+.ace-fab.ace-hidden { display:none !important; }
 @keyframes aceSlideUp { from { opacity:0; transform:translateY(16px) scale(0.96); } to { opacity:1; transform:translateY(0) scale(1); } }
 
 .ace-chat-header { padding:0.85rem 1.1rem; background:var(--navy-mid); color:#fff; display:flex; align-items:center; gap:0.7rem; flex-shrink:0; }
@@ -532,8 +534,8 @@ select {
 .ace-chat-header .ace-hdr-text { flex:1; }
 .ace-chat-header .ace-title { font-weight:700; font-size:0.9rem; color:#fff; }
 .ace-chat-header .ace-subtitle { font-size:0.65rem; color:var(--copper); font-weight:600; letter-spacing:0.03em; margin-top:1px; }
-.ace-chat-header .ace-close-btn { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:1.4rem; cursor:pointer; padding:0.25rem 0.55rem; border-radius:6px; transition:all 0.15s; line-height:1; flex-shrink:0; }
-.ace-chat-header .ace-close-btn:hover { color:#fff; background:rgba(255,255,255,0.25); border-color:rgba(255,255,255,0.4); }
+.ace-chat-header .ace-close-btn { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3); color:#fff; font-size:1.1rem; cursor:pointer; padding:0.35rem 0.65rem; border-radius:6px; transition:all 0.15s; line-height:1; flex-shrink:0; font-weight:700; min-width:32px; min-height:32px; display:flex; align-items:center; justify-content:center; }
+.ace-chat-header .ace-close-btn:hover { background:rgba(255,100,100,0.3); border-color:rgba(255,100,100,0.5); color:#fff; }
 
 .ace-messages { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.65rem; min-height:220px; max-height:360px; }
 .ace-msg { max-width:82%; padding:0.6rem 0.9rem; border-radius:var(--radius-md); font-size:0.82rem; line-height:1.55; word-wrap:break-word; white-space:pre-wrap; }
@@ -3576,18 +3578,17 @@ function _aceCreateUI() {
   fab.id = 'ace-fab';
   fab.innerHTML = aceSvg;
   fab.title = 'Ask Ace';
-  fab.onclick = _aceToggle;
+  fab.addEventListener('click', function(e) { e.stopPropagation(); _aceOpen(); });
   document.body.appendChild(fab);
 
   const panel = document.createElement('div');
   panel.className = 'ace-chat-panel';
   panel.id = 'ace-panel';
-  panel.hidden = true;
   panel.innerHTML =
     '<div class="ace-chat-header">' +
       '<div class="ace-avatar">' + aceSvg.replace('width="1.8"','width="1.5"') + '</div>' +
       '<div class="ace-hdr-text"><div class="ace-title">Ask Ace</div><div class="ace-subtitle">AI Work Assistant</div></div>' +
-      '<button class="ace-close-btn" id="ace-close-btn" title="Close">&times;</button>' +
+      '<button class="ace-close-btn" id="ace-close-btn" title="Close">&#x2715;</button>' +
     '</div>' +
     '<div class="ace-messages" id="ace-messages"></div>' +
     '<div class="ace-input-row">' +
@@ -3597,24 +3598,40 @@ function _aceCreateUI() {
   document.body.appendChild(panel);
 
   document.getElementById('ace-close-btn').addEventListener('click', function(e) {
+    e.preventDefault();
     e.stopPropagation();
-    _aceToggle();
+    _aceClose();
   });
+
+  panel.addEventListener('click', function(e) { e.stopPropagation(); });
+  document.addEventListener('click', function() { _aceClose(); });
 
   _aceAddMsg('system', 'Hi! I\'m Ace, your AI work assistant. Ask me anything about the portal, clients, bookkeeping, or workflow.');
 }
 
+function _aceOpen() {
+  if (_aceChatOpen) return;
+  _aceChatOpen = true;
+  var panel = document.getElementById('ace-panel');
+  var fab = document.getElementById('ace-fab');
+  panel.classList.add('ace-open');
+  fab.classList.add('ace-hidden');
+  setTimeout(function() { document.getElementById('ace-input').focus(); }, 100);
+  var msgs = document.getElementById('ace-messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function _aceClose() {
+  if (!_aceChatOpen) return;
+  _aceChatOpen = false;
+  var panel = document.getElementById('ace-panel');
+  var fab = document.getElementById('ace-fab');
+  panel.classList.remove('ace-open');
+  fab.classList.remove('ace-hidden');
+}
+
 function _aceToggle() {
-  _aceChatOpen = !_aceChatOpen;
-  const panel = document.getElementById('ace-panel');
-  const fab = document.getElementById('ace-fab');
-  panel.hidden = !_aceChatOpen;
-  fab.hidden = _aceChatOpen;
-  if (_aceChatOpen) {
-    setTimeout(() => document.getElementById('ace-input').focus(), 100);
-    const msgs = document.getElementById('ace-messages');
-    msgs.scrollTop = msgs.scrollHeight;
-  }
+  if (_aceChatOpen) _aceClose(); else _aceOpen();
 }
 
 function _aceAddMsg(role, text) {
