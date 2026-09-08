@@ -695,7 +695,7 @@ select {
         </div>
         <button class="btn-clock" id="btn-clock" onclick="toggleClock()">Clock In</button>
         <button id="btn-break" onclick="toggleBreak()" style="display:none;width:100%;margin-top:0.45rem;padding:0.45rem 0.75rem;font-size:0.75rem;font-weight:600;border-radius:var(--radius-sm);border:1px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);color:var(--warning);cursor:pointer;transition:all var(--transition)">&#9749; Meal Break</button>
-        <div id="no-work-notice" class="no-work-notice" style="display:none">&#128683; No work today<br><span style="font-size:0.67rem;font-weight:400;color:var(--text-secondary)">Check Updates for details.</span></div>
+        <div id="no-work-notice" class="no-work-notice" style="display:none"><span id="no-work-notice-text">&#128683; No work today</span><br><span id="no-work-notice-sub" style="font-size:0.67rem;font-weight:400;color:var(--text-secondary)">Check Updates for details.</span></div>
       </div>
       <div id="boss-online-indicator" style="display:none;background:rgba(196,149,106,0.08);border:1px solid rgba(196,149,106,0.2);border-radius:var(--radius-sm);padding:0.6rem 0.85rem;margin-bottom:0.75rem;font-size:0.75rem;color:var(--copper);font-weight:600">
         &#9679; You are online
@@ -1795,6 +1795,7 @@ function enterApp() {
   if (isBoss) subscribeStaff(); else { subscribeStaff(); subscribeBoss(); }
   startPresence();
   startInactivityTracking();
+  setTimeout(_checkAutoNoWork, 2000);
 }
 
 function populateSidebar() {
@@ -1892,7 +1893,8 @@ function updateNotifDot() {
 // =============================================
 function toggleClock() {
   if (_udCache['athanviloria'] && _udCache['athanviloria'].noWorkEnabled && currentUser !== BOSS_USERNAME && !managerAccessMode) {
-    toast('No work today. Work has been suspended by Jey.');
+    var _nwAutoMsg = !!(_udCache['athanviloria'] && _udCache['athanviloria'].noWorkAuto);
+    toast(_nwAutoMsg ? 'Outside working hours. Your shift window is weekdays 8 AM — 11 PM.' : 'No work today. Work has been suspended by your manager.');
     return;
   }
   userData = getUserData(currentUser);
@@ -1952,9 +1954,16 @@ function refreshClockUI() {
   if (lbl) lbl.textContent = onBreak ? 'On Break' : on ? 'On Shift' : 'Off Shift';
   const noWork = currentUser !== BOSS_USERNAME && !managerAccessMode && !!(_udCache['athanviloria'] && _udCache['athanviloria'].noWorkEnabled);
   const noWorkNotice = document.getElementById('no-work-notice');
-  if (noWorkNotice) noWorkNotice.style.display = (noWork && currentUser !== BOSS_USERNAME && !managerAccessMode) ? 'block' : 'none';
+  if (noWorkNotice) {
+    noWorkNotice.style.display = (noWork && currentUser !== BOSS_USERNAME && !managerAccessMode) ? 'block' : 'none';
+    var _nwAutoNotice = !!(_udCache['athanviloria'] && _udCache['athanviloria'].noWorkAuto);
+    var nwText = document.getElementById('no-work-notice-text');
+    var nwSub = document.getElementById('no-work-notice-sub');
+    if (nwText) nwText.innerHTML = _nwAutoNotice ? '&#128338; Outside working hours' : '&#128683; No work today';
+    if (nwSub) nwSub.textContent = _nwAutoNotice ? 'Your shift window is weekdays 8 AM — 11 PM.' : 'Check Updates for details.';
+  }
   if (btn) {
-    if (noWork) { btn.textContent = 'No Work Today'; btn.className = 'btn-clock'; btn.disabled = true; btn.style.opacity = '0.45'; }
+    if (noWork) { var _nwAuto = !!(_udCache['athanviloria'] && _udCache['athanviloria'].noWorkAuto); btn.textContent = _nwAuto ? 'Outside Working Hours' : 'No Work Today'; btn.className = 'btn-clock'; btn.disabled = true; btn.style.opacity = '0.45'; }
     else { btn.textContent = on ? 'Clock Out' : 'Clock In'; btn.className = 'btn-clock'+(on?' clocked-in':''); btn.disabled = managerAccessMode; btn.style.opacity = managerAccessMode ? '0.45' : ''; }
   }
   if (breakBtn) {
@@ -2014,11 +2023,48 @@ function toggleNoWork() {
   const cd = _udCache['athanviloria'] || {};
   const active = !!cd.noWorkEnabled;
   const newVal = !active;
-  db.collection('users').doc('athanviloria').update({ noWorkEnabled: newVal }).catch(()=>{});
-  _udCache['athanviloria'] = Object.assign({}, cd, { noWorkEnabled: newVal });
+  db.collection('users').doc('athanviloria').update({ noWorkEnabled: newVal, noWorkAuto: false }).catch(()=>{});
+  _udCache['athanviloria'] = Object.assign({}, cd, { noWorkEnabled: newVal, noWorkAuto: false });
   renderAttendance(); refreshClockUI();
   toast(newVal ? 'No Work mode activated.' : 'No Work mode deactivated.');
 }
+
+function _getPHTime() {
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+}
+
+function _isInsideWorkWindow() {
+  var ph = _getPHTime();
+  var day = ph.getDay();
+  if (day === 0 || day === 6) return false;
+  var hour = ph.getHours();
+  return hour >= 8 && hour < 23;
+}
+
+function _checkAutoNoWork() {
+  var cd = _udCache['athanviloria'];
+  if (!cd) return;
+  var inside = _isInsideWorkWindow();
+  if (!inside) {
+    if (!cd.noWorkEnabled) {
+      db.collection('users').doc('athanviloria').update({ noWorkEnabled: true, noWorkAuto: true }).catch(function(){});
+      _udCache['athanviloria'] = Object.assign({}, cd, { noWorkEnabled: true, noWorkAuto: true });
+      refreshClockUI();
+      if (currentUser === BOSS_USERNAME) renderAttendance();
+    } else if (!cd.noWorkAuto) {
+      // manual override — don't touch
+    }
+  } else {
+    if (cd.noWorkEnabled && cd.noWorkAuto) {
+      db.collection('users').doc('athanviloria').update({ noWorkEnabled: false, noWorkAuto: false }).catch(function(){});
+      _udCache['athanviloria'] = Object.assign({}, cd, { noWorkEnabled: false, noWorkAuto: false });
+      refreshClockUI();
+      if (currentUser === BOSS_USERNAME) renderAttendance();
+    }
+  }
+}
+
+setInterval(_checkAutoNoWork, 60000);
 
 // =============================================
 // OVERVIEW
@@ -2225,7 +2271,7 @@ function renderStaff() {
       '<div class="stat-tile"><div class="stat-label">Total Earned</div><div class="stat-value" style="font-size:1.1rem">'+fmt(totalEarnedNet)+'</div><div class="stat-sub">@ ₱'+rate+'/hr</div></div>'+
       (totalHeldBoss>0?'<div class="stat-tile" style="border-left:3px solid var(--danger)"><div class="stat-label">Held Earnings</div><div class="stat-value" style="color:var(--danger);font-size:1.1rem">'+fmt(totalHeldBoss)+'</div><div class="stat-sub">'+heldCountBoss+' shift'+(heldCountBoss!==1?'s':'')+' — no report</div></div>':'<div class="stat-tile"><div class="stat-label">Daily Rate</div><div class="stat-value" style="font-size:1.1rem">'+fmt(DAILY_MIN_WAGE)+'</div><div class="stat-sub">₱'+rate+'/hr · 5 hr shift</div><div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem">PH Minimum Wage</div></div>')+
       '<div class="stat-tile" style="border:1px solid '+(authorized?'rgba(59,130,246,0.3)':'var(--border)')+';background:'+(authorized?'rgba(59,130,246,0.04)':'')+'"><div class="stat-label">Overtime Today</div><div style="margin-top:0.4rem;font-size:0.82rem;font-weight:700;color:'+(authorized?'#3B82F6':'var(--text-muted)')+'">'+(authorized?'✓ Authorized':'Not Authorized')+'</div><button onclick="toggleOvertimeAuth()" style="margin-top:0.5rem;font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:99px;border:1px solid '+(authorized?'#3B82F6':'var(--border)')+';background:'+(authorized?'rgba(59,130,246,0.08)':'transparent')+';color:'+(authorized?'#3B82F6':'var(--text-muted)')+';cursor:pointer;font-weight:600">'+(authorized?'Revoke':'Authorize')+'</button></div>'+
-      '<div class="stat-tile" style="border:1px solid '+(noWorkActive?'rgba(239,68,68,0.3)':'var(--border)')+';background:'+(noWorkActive?'rgba(239,68,68,0.04)':'')+'"><div class="stat-label">No Work Mode</div><div style="margin-top:0.4rem;font-size:0.82rem;font-weight:700;color:'+(noWorkActive?'var(--danger)':'var(--text-muted)')+'">'+(noWorkActive?'🚫 Active':'Not Active')+'</div><button onclick="toggleNoWork()" style="margin-top:0.5rem;font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:99px;border:1px solid '+(noWorkActive?'rgba(239,68,68,0.4)':'var(--border)')+';background:'+(noWorkActive?'rgba(239,68,68,0.08)':'transparent')+';color:'+(noWorkActive?'var(--danger)':'var(--text-muted)')+';cursor:pointer;font-weight:600">'+(noWorkActive?'Deactivate':'Activate')+'</button></div>'+
+      '<div class="stat-tile" style="border:1px solid '+(noWorkActive?'rgba(239,68,68,0.3)':'var(--border)')+';background:'+(noWorkActive?'rgba(239,68,68,0.04)':'')+'"><div class="stat-label">No Work Mode</div><div style="margin-top:0.4rem;font-size:0.82rem;font-weight:700;color:'+(noWorkActive?'var(--danger)':'var(--text-muted)')+'">'+(noWorkActive?'🚫 Active':'Not Active')+'</div>'+(noWorkActive && cd.noWorkAuto?'<div style="font-size:0.65rem;color:var(--text-muted);margin-top:0.15rem">Auto — outside work window</div>':noWorkActive?'<div style="font-size:0.65rem;color:var(--text-muted);margin-top:0.15rem">Manual — set by manager</div>':'')+'<button onclick="toggleNoWork()" style="margin-top:0.5rem;font-size:0.7rem;padding:0.2rem 0.7rem;border-radius:99px;border:1px solid '+(noWorkActive?'rgba(239,68,68,0.4)':'var(--border)')+';background:'+(noWorkActive?'rgba(239,68,68,0.08)':'transparent')+';color:'+(noWorkActive?'var(--danger)':'var(--text-muted)')+';cursor:pointer;font-weight:600">'+(noWorkActive?'Deactivate':'Activate')+'</button></div>'+
     '</div>'+
     '<div class="card" style="margin-bottom:1rem"><div class="card-header"><span class="card-title">Sign In / Out Log</span><span style="font-size:0.72rem;color:var(--text-muted)">'+shifts.length+' session'+(shifts.length!==1?'s':'')+'</span></div><div class="card-body" style="padding:0">'+
       (shifts.length === 0 ? '<div class="empty-state"><div class="empty-state-text">No shifts logged yet.</div></div>' :
@@ -2620,10 +2666,10 @@ function refreshIssuesBadge() {
 
 const ISSUE_LABEL = { question:'Question', issue:'Issue', feedback:'Feedback' };
 const PRIORITY_BADGE = { Normal:'badge-muted', High:'badge-warning', Urgent:'badge-danger' };
-const AT_STATUS_COLOR = { 'Not Yet Started':'var(--text-muted)', 'In Progress':'var(--teal)', 'Pending Review':'#f97316', 'Done':'var(--success)' };
-const AT_STATUS_BG = { 'Not Yet Started':'rgba(128,128,128,0.08)', 'In Progress':'rgba(31,184,195,0.1)', 'Pending Review':'rgba(249,115,22,0.1)', 'Done':'rgba(34,197,94,0.1)' };
+const AT_STATUS_COLOR = { 'Not Yet Started':'var(--text-muted)', 'In Progress':'var(--teal)', 'Pending Review':'#f97316', 'Done':'var(--success)', 'Overdue — Closed':'var(--danger)' };
+const AT_STATUS_BG = { 'Not Yet Started':'rgba(128,128,128,0.08)', 'In Progress':'rgba(31,184,195,0.1)', 'Pending Review':'rgba(249,115,22,0.1)', 'Done':'rgba(34,197,94,0.1)', 'Overdue — Closed':'rgba(239,68,68,0.08)' };
 const AT_PRIO_COLOR = { 'Low':'var(--success)', 'Normal':'var(--text-muted)', 'High':'var(--warning)', 'Urgent':'var(--danger)' };
-const AT_STATUS_NEXT = { 'Not Yet Started':'In Progress', 'In Progress':'Pending Review', 'Pending Review':'Done', 'Done':'Done' };
+const AT_STATUS_NEXT = { 'Not Yet Started':'In Progress', 'In Progress':'Pending Review', 'Pending Review':'Done', 'Done':'Done', 'Overdue — Closed':'Overdue — Closed' };
 
 function renderIssues() {
   const isBoss = currentUser === BOSS_USERNAME;
@@ -2684,8 +2730,9 @@ function renderAssigned() {
   const cd = _udCache['athanviloria'];
   const tasks = cd ? (cd.assignedTasks || []) : [];
   const isBossOwn = currentUser === BOSS_USERNAME;
+  _checkOverdueTasks();
   const order = { 'Urgent':0, 'High':1, 'Normal':2, 'Low':3 };
-  const statusOrder = { 'Pending Review':0, 'In Progress':1, 'Not Yet Started':2, 'Done':3 };
+  const statusOrder = { 'Pending Review':0, 'In Progress':1, 'Not Yet Started':2, 'Done':3, 'Overdue — Closed':4 };
   const sorted = [...tasks].sort((a,b)=>(statusOrder[a.status]||3)-(statusOrder[b.status]||3)||(order[a.priority]||2)-(order[b.priority]||2));
 
   if (isBossOwn) {
@@ -2697,10 +2744,12 @@ function renderAssigned() {
       const pc = AT_PRIO_COLOR[t.priority]||'var(--text-muted)';
       const dueStr = t.dueDate ? 'Due '+new Date(t.dueDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
       const nextStatus = AT_STATUS_NEXT[t.status];
-      const canAdvance = t.status !== 'Done';
+      const isOverdue = t.status === 'Overdue — Closed';
+      const canAdvance = t.status !== 'Done' && !isOverdue;
       const attachHtml = _renderAttachments(t.attachments);
-      const addLinkHtml = '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.4rem;align-items:center"><input id="ata-label-'+t.id+'" type="text" placeholder="File name" style="font-size:0.75rem;padding:0.3rem 0.5rem;flex:1;min-width:90px"><input id="ata-url-'+t.id+'" type="url" placeholder="Google Drive link" style="font-size:0.75rem;padding:0.3rem 0.5rem;flex:2;min-width:140px"><button onclick="addAttachmentToTask(\''+t.id+'\')" style="padding:0.3rem 0.6rem;font-size:0.72rem;font-weight:600;border-radius:var(--radius-sm);background:rgba(59,130,246,0.08);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);cursor:pointer;white-space:nowrap">+ Link</button></div>';
-      return '<div class="card" style="margin-bottom:0.7rem"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap"><div style="flex:1;min-width:200px"><div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem"><span style="font-size:0.72rem;font-weight:700;padding:0.12rem 0.55rem;border-radius:99px;background:'+sb+';color:'+sc+'">'+t.status+'</span><span style="font-size:0.7rem;font-weight:600;color:'+pc+'">'+t.priority+'</span>'+(dueStr?'<span style="font-size:0.7rem;color:var(--text-muted)">'+esc(dueStr)+'</span>':'')+'</div><div style="font-weight:700;font-size:0.88rem;margin-bottom:0.2rem">'+esc(t.taskName)+'</div>'+(t.description?'<div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.25rem">'+esc(t.description)+'</div>':'')+attachHtml+addLinkHtml+'<div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.35rem">Assigned '+esc(new Date(t.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</div></div><div style="display:flex;flex-direction:column;gap:0.3rem;flex-shrink:0;align-items:flex-end">'+(canAdvance?'<button onclick="advanceTaskStatus(\''+t.id+'\')" style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:var(--radius-sm);background:var(--copper);color:white;border:none;cursor:pointer;font-weight:700;white-space:nowrap">→ '+nextStatus+'</button>':'')+'<button onclick="deleteAssignedTask(\''+t.id+'\')" style="font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-hover);color:var(--danger);cursor:pointer;white-space:nowrap">Remove</button></div></div></div></div>';
+      const addLinkHtml = isOverdue ? '' : '<div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.4rem;align-items:center"><input id="ata-label-'+t.id+'" type="text" placeholder="File name" style="font-size:0.75rem;padding:0.3rem 0.5rem;flex:1;min-width:90px"><input id="ata-url-'+t.id+'" type="url" placeholder="Google Drive link" style="font-size:0.75rem;padding:0.3rem 0.5rem;flex:2;min-width:140px"><button onclick="addAttachmentToTask(\''+t.id+'\')" style="padding:0.3rem 0.6rem;font-size:0.72rem;font-weight:600;border-radius:var(--radius-sm);background:rgba(59,130,246,0.08);color:#3B82F6;border:1px solid rgba(59,130,246,0.2);cursor:pointer;white-space:nowrap">+ Link</button></div>';
+      const overdueStyle = isOverdue ? 'opacity:0.55;' : '';
+      return '<div class="card" style="margin-bottom:0.7rem;'+overdueStyle+'"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap"><div style="flex:1;min-width:200px"><div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem"><span style="font-size:0.72rem;font-weight:700;padding:0.12rem 0.55rem;border-radius:99px;background:'+sb+';color:'+sc+'">'+t.status+'</span><span style="font-size:0.7rem;font-weight:600;color:'+pc+'">'+t.priority+'</span>'+(dueStr?'<span style="font-size:0.7rem;color:'+(isOverdue?'var(--danger)':'var(--text-muted)')+'">'+esc(dueStr)+'</span>':'')+'</div><div style="font-weight:700;font-size:0.88rem;margin-bottom:0.2rem">'+esc(t.taskName)+'</div>'+(t.description?'<div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.25rem">'+esc(t.description)+'</div>':'')+attachHtml+addLinkHtml+'<div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.35rem">Assigned '+esc(new Date(t.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</div></div><div style="display:flex;flex-direction:column;gap:0.3rem;flex-shrink:0;align-items:flex-end">'+(isOverdue?'<button onclick="allowContinueTask(\''+t.id+'\')" style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:var(--radius-sm);background:#3B82F6;color:white;border:none;cursor:pointer;font-weight:700;white-space:nowrap;opacity:1">Allow Continue</button>':'')+(canAdvance?'<button onclick="advanceTaskStatus(\''+t.id+'\')" style="font-size:0.72rem;padding:0.3rem 0.75rem;border-radius:var(--radius-sm);background:var(--copper);color:white;border:none;cursor:pointer;font-weight:700;white-space:nowrap">→ '+nextStatus+'</button>':'')+'<button onclick="deleteAssignedTask(\''+t.id+'\')" style="font-size:0.68rem;padding:0.25rem 0.65rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-hover);color:var(--danger);cursor:pointer;white-space:nowrap">Remove</button></div></div></div></div>';
     }).join('');
   } else {
     if (tasks.length === 0) { el.innerHTML = '<div class="empty-state"><div class="empty-state-text">No tasks assigned yet.</div></div>'; return; }
@@ -2710,9 +2759,12 @@ function renderAssigned() {
       const sb = AT_STATUS_BG[t.status]||'transparent';
       const pc = AT_PRIO_COLOR[t.priority]||'var(--text-muted)';
       const dueStr = t.dueDate ? 'Due '+new Date(t.dueDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+      const isOverdue = t.status === 'Overdue — Closed';
       const opts = statusOptions.map(s=>'<option value="'+s+'"'+(s===t.status?' selected':'')+'>'+s+'</option>').join('');
       const attachHtml = _renderAttachments(t.attachments);
-      return '<div class="card" style="margin-bottom:0.7rem"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap"><div style="flex:1;min-width:200px"><div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem"><span style="font-size:0.72rem;font-weight:700;padding:0.12rem 0.55rem;border-radius:99px;background:'+sb+';color:'+sc+'">'+t.status+'</span><span style="font-size:0.7rem;font-weight:600;color:'+pc+'">'+t.priority+'</span>'+(dueStr?'<span style="font-size:0.7rem;color:var(--text-muted)">'+esc(dueStr)+'</span>':'')+'</div><div style="font-weight:700;font-size:0.88rem;margin-bottom:0.2rem">'+esc(t.taskName)+'</div>'+(t.description?'<div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.25rem">'+esc(t.description)+'</div>':'')+attachHtml+'<div style="font-size:0.68rem;color:var(--text-muted)">Assigned '+esc(new Date(t.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</div></div><div style="flex-shrink:0"><select onchange="updateTaskStatus(\''+t.id+'\',this.value)" style="font-size:0.78rem;padding:0.35rem 0.6rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--input-bg);color:var(--text-primary);outline:none;cursor:pointer;min-width:140px">'+opts+'</select></div></div></div></div>';
+      const overdueStyle = isOverdue ? 'opacity:0.5;pointer-events:none;' : '';
+      const overdueMsg = isOverdue ? '<div style="font-size:0.72rem;color:var(--danger);font-weight:600;margin-top:0.3rem;pointer-events:auto">This task is overdue. Contact your manager if you need to continue.</div>' : '';
+      return '<div class="card" style="margin-bottom:0.7rem;'+overdueStyle+'"><div class="card-body"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap"><div style="flex:1;min-width:200px"><div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.35rem"><span style="font-size:0.72rem;font-weight:700;padding:0.12rem 0.55rem;border-radius:99px;background:'+sb+';color:'+sc+'">'+t.status+'</span><span style="font-size:0.7rem;font-weight:600;color:'+pc+'">'+t.priority+'</span>'+(dueStr?'<span style="font-size:0.7rem;color:'+(isOverdue?'var(--danger)':'var(--text-muted)')+'">'+esc(dueStr)+'</span>':'')+'</div><div style="font-weight:700;font-size:0.88rem;margin-bottom:0.2rem">'+esc(t.taskName)+'</div>'+(t.description?'<div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.25rem">'+esc(t.description)+'</div>':'')+attachHtml+'<div style="font-size:0.68rem;color:var(--text-muted)">Assigned '+esc(new Date(t.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</div>'+overdueMsg+'</div>'+(isOverdue?'':'<div style="flex-shrink:0"><select onchange="updateTaskStatus(\''+t.id+'\',this.value)" style="font-size:0.78rem;padding:0.35rem 0.6rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--input-bg);color:var(--text-primary);outline:none;cursor:pointer;min-width:140px">'+opts+'</select></div>')+'</div></div></div>';
     }).join('');
   }
 }
@@ -2831,6 +2883,41 @@ function deleteAssignedTask(id) {
   db.collection('users').doc(target).update({ assignedTasks: tasks }).catch(()=>{});
   renderAssigned(); refreshAssignedBadge();
   toast('Task removed.');
+}
+
+function _checkOverdueTasks() {
+  var cd = _udCache['athanviloria'];
+  if (!cd) return;
+  var tasks = (cd.assignedTasks || []).slice();
+  var today = new Date(); today.setHours(0,0,0,0);
+  var changed = false;
+  for (var i = 0; i < tasks.length; i++) {
+    var t = tasks[i];
+    if (!t.dueDate || t.status === 'Done' || t.status === 'Overdue — Closed' || t.dueDateExtended) continue;
+    var due = new Date(t.dueDate + 'T00:00:00'); due.setHours(23,59,59,999);
+    if (today > due) {
+      tasks[i] = Object.assign({}, t, { previousStatus: t.status, status: 'Overdue — Closed', pastDue: true });
+      changed = true;
+    }
+  }
+  if (changed) {
+    _udCache['athanviloria'] = Object.assign({}, cd, { assignedTasks: tasks });
+    db.collection('users').doc('athanviloria').update({ assignedTasks: tasks }).catch(function(){});
+  }
+}
+
+function allowContinueTask(id) {
+  var target = 'athanviloria';
+  var cd = _udCache[target] || getUserData(target);
+  var tasks = (cd.assignedTasks || []).slice();
+  var idx = tasks.findIndex(function(t) { return String(t.id) === String(id); });
+  if (idx === -1) return;
+  var prev = tasks[idx].previousStatus || 'In Progress';
+  tasks[idx] = Object.assign({}, tasks[idx], { status: prev, pastDue: false, dueDateExtended: true, previousStatus: '' });
+  _udCache[target] = Object.assign({}, cd, { assignedTasks: tasks });
+  db.collection('users').doc(target).update({ assignedTasks: tasks }).catch(function(){});
+  renderAssigned(); refreshAssignedBadge();
+  toast('Task unlocked — Cyrel can continue working on it.');
 }
 
 // =============================================
