@@ -1326,6 +1326,7 @@ function subscribeStaff() {
       _chatLogs = snap.data().aceChatLogs || [];
     }
     _refreshChatLogsBadge();
+    _checkOverdueTasks();
     if (currentUser === BOSS_USERNAME) {
       refreshOverview(); refreshIssuesBadge(); refreshAssignedBadge();
       const activePage = document.querySelector('.nav-item.active');
@@ -1894,12 +1895,12 @@ function updateNotifDot() {
 // CLOCK IN/OUT
 // =============================================
 function toggleClock() {
-  if (_udCache['athanviloria'] && _udCache['athanviloria'].noWorkEnabled && currentUser !== BOSS_USERNAME && !managerAccessMode) {
+  userData = getUserData(currentUser);
+  if (!userData.clockedIn && _udCache['athanviloria'] && _udCache['athanviloria'].noWorkEnabled && currentUser !== BOSS_USERNAME && !managerAccessMode) {
     var _nwAutoMsg = !!(_udCache['athanviloria'] && _udCache['athanviloria'].noWorkAuto);
     toast(_nwAutoMsg ? 'Outside working hours. Your shift window is weekdays 8 AM — 11 PM.' : 'No work today. Work has been suspended by your manager.');
     return;
   }
-  userData = getUserData(currentUser);
   if (!userData.clockedIn) {
     const now = new Date();
     const day = now.getDay();
@@ -1954,7 +1955,8 @@ function refreshClockUI() {
   const el = document.getElementById('clock-elapsed');
   if (dot) { dot.classList.toggle('active',on); dot.style.background = onBreak ? 'var(--warning)' : ''; }
   if (lbl) lbl.textContent = onBreak ? 'On Break' : on ? 'On Shift' : 'Off Shift';
-  const noWork = currentUser !== BOSS_USERNAME && !managerAccessMode && !!(_udCache['athanviloria'] && _udCache['athanviloria'].noWorkEnabled);
+  const noWorkFlag = currentUser !== BOSS_USERNAME && !managerAccessMode && !!(_udCache['athanviloria'] && _udCache['athanviloria'].noWorkEnabled);
+  const noWork = noWorkFlag && !on;
   const noWorkNotice = document.getElementById('no-work-notice');
   if (noWorkNotice) {
     noWorkNotice.style.display = (noWork && currentUser !== BOSS_USERNAME && !managerAccessMode) ? 'block' : 'none';
@@ -2032,7 +2034,8 @@ function toggleNoWork() {
 }
 
 function _getPHTime() {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  try { return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' })); }
+  catch(e) { var now = new Date(); return new Date(now.getTime() + (8 * 60 * 60 * 1000) + (now.getTimezoneOffset() * 60 * 1000)); }
 }
 
 function _isInsideWorkWindow() {
@@ -2044,6 +2047,7 @@ function _isInsideWorkWindow() {
 }
 
 function _checkAutoNoWork() {
+  if (!currentUser) return;
   var cd = _udCache['athanviloria'];
   if (!cd) return;
   var inside = _isInsideWorkWindow();
