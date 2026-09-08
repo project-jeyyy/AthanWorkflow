@@ -2720,19 +2720,23 @@ function respondToIssue(id) {
 // =============================================
 function refreshAssignedBadge() {
   const cd = _udCache['athanviloria'];
-  const pending = (cd ? (cd.assignedTasks||[]) : []).filter(t=>t.status==='Pending Review').length;
+  const allTasks = cd ? (cd.assignedTasks||[]) : [];
+  const pending = allTasks.filter(t=>t.status==='Pending Review').length;
+  const overdue = allTasks.filter(t=>t.status==='Overdue — Closed').length;
+  const count = pending + overdue;
   const b = document.getElementById('assigned-badge');
   if (!b) return;
-  if (pending>0) { b.textContent=pending; b.classList.remove('hidden'); } else { b.classList.add('hidden'); }
+  if (count>0) { b.textContent=count; b.classList.remove('hidden'); } else { b.classList.add('hidden'); }
 }
 
 function renderAssigned() {
   const el = document.getElementById('assigned-content');
   if (!el) return;
   const cd = _udCache['athanviloria'];
-  const tasks = cd ? (cd.assignedTasks || []) : [];
+  var tasks = cd ? (cd.assignedTasks || []) : [];
   const isBossOwn = currentUser === BOSS_USERNAME;
   _checkOverdueTasks();
+  tasks = _udCache['athanviloria'] ? (_udCache['athanviloria'].assignedTasks || []) : tasks;
   const order = { 'Urgent':0, 'High':1, 'Normal':2, 'Low':3 };
   const statusOrder = { 'Pending Review':0, 'In Progress':1, 'Not Yet Started':2, 'Done':3, 'Overdue — Closed':4 };
   const sorted = [...tasks].sort((a,b)=>(statusOrder[a.status]||3)-(statusOrder[b.status]||3)||(order[a.priority]||2)-(order[b.priority]||2));
@@ -2777,6 +2781,7 @@ function updateTaskStatus(id, newStatus) {
   const tasks = (cd.assignedTasks || []).slice();
   const idx = tasks.findIndex(t => String(t.id) === String(id));
   if (idx === -1) return;
+  if (tasks[idx].status === 'Overdue — Closed' && currentUser !== BOSS_USERNAME) { toast('This task is overdue and locked.'); renderAssigned(); return; }
   tasks[idx] = { ...tasks[idx], status: newStatus };
   _udCache[target] = Object.assign({}, cd, { assignedTasks: tasks });
   db.collection('users').doc(target).update({ assignedTasks: tasks }).catch(()=>{});
@@ -2869,6 +2874,7 @@ function advanceTaskStatus(id) {
   const tasks = (cd.assignedTasks || []).slice();
   const idx = tasks.findIndex(t => String(t.id) === String(id));
   if (idx === -1) return;
+  if (tasks[idx].status === 'Overdue — Closed') { toast('Use "Allow Continue" to unlock this task first.'); return; }
   tasks[idx] = { ...tasks[idx], status: AT_STATUS_NEXT[tasks[idx].status] || tasks[idx].status };
   _udCache[target] = Object.assign({}, cd, { assignedTasks: tasks });
   db.collection('users').doc(target).update({ assignedTasks: tasks }).catch(()=>{});
